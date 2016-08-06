@@ -1,5 +1,28 @@
 describe Holotype do
+  # Helpers
+
+  class BlockWatcher
+    class << self
+      def record_call
+        @total_calls = total_calls + 1
+      end
+
+      def total_calls
+        @total_calls || 0
+      end
+
+      def reset
+        @total_calls = 0
+      end
+    end
+  end
+
+  def make_test_class &block
+    Class.new(described_class).tap &block
+  end
+
   # Lets
+
   junklet *%i[
     attribute_a_name
     attribute_a_value
@@ -22,21 +45,30 @@ describe Holotype do
   end
 
   let :test_class_with_basic_attribute do
-    Class
-      .new(described_class)
-      .tap do |test_class|
-        test_class.send :attribute, attribute_a_name
-      end
+    make_test_class do |test_class|
+      test_class.send :attribute, attribute_a_name
+    end
   end
 
   let :test_class_with_two_attributes do
-    Class
-      .new(described_class)
-      .tap do |test_class|
-        test_class.send :attribute, attribute_a_name
-        test_class.send :attribute, attribute_b_name
-      end
+    make_test_class do |test_class|
+      test_class.send :attribute, attribute_a_name
+      test_class.send :attribute, attribute_b_name
+    end
   end
+
+  let :test_class_with_attribute_default do
+    make_test_class do |test_class|
+      test_class.send(:attribute, attribute_a_name) do
+        BlockWatcher.record_call
+        :default_value
+      end
+    end
+  end
+
+  # Wrappers
+
+  before { BlockWatcher.reset }
 
   # Class Method Tests
 
@@ -56,8 +88,27 @@ describe Holotype do
       expect(instance_attribute_a).to be_frozen
     end
 
-    context 'when given a block' do
+    context 'when given no block' do
+      let(:instance_attributes) { Hash[] }
+      let(:test_class)          { test_class_with_basic_attribute }
 
+      it 'provides no default value' do
+        expect(instance_attribute_a).to be nil
+      end
+    end
+
+    context 'when given a block' do
+      let(:instance_attributes) { Hash[] }
+      let(:test_class)          { test_class_with_attribute_default }
+
+      it 'lazily calls the block for the default value' do
+        # initialize the instance before calling the method
+        test_instance
+
+        expect(BlockWatcher.total_calls).to eq 0
+        expect(instance_attribute_a).to eq :default_value
+        expect(BlockWatcher.total_calls).to eq 1
+      end
     end
   end
 
