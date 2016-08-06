@@ -1,5 +1,8 @@
-require_relative 'holotype/missing_required_attributes_error.rb'
-require_relative 'holotype/version.rb'
+%i[
+  attribute
+  missing_required_attributes_error
+  version
+].each { |name| require_relative "holotype/#{name}.rb" }
 
 class Holotype
   # Singleton Definition
