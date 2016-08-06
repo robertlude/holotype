@@ -47,4 +47,8 @@ class Holotype
 
     true
   end
+
+  def with **attributes
+    self.class.new to_hash.merge attributes
+  end
 end
