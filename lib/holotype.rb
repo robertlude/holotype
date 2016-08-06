@@ -1,20 +1,24 @@
-require 'memorandum'
-
+require_relative 'holotype/missing_required_attributes_error.rb'
 require_relative 'holotype/version.rb'
 
 class Holotype
   # Singleton Definition
 
   class << self
-    extend Memorandum
-
-    def attribute name, &default
+    def attribute name, **options, &default
+      # symbolize the name
       name = name.to_sym
 
+      # remember the attribute
       attributes << name
 
+      # store the default block if supplied
       __attribute_default[name] = default if default
 
+      # remember if the attribute is required
+      __required_attributes << name if options[:required]
+
+      # create an attribute reader
       define_method name do
         internal_name = "@#{name}"
 
@@ -38,23 +42,44 @@ class Holotype
     end
 
     def attributes
-      []
+      @attributes ||= []
     end
-    memo :attributes
 
     def __attribute_default
-      Hash[]
+      @__attribute_default ||= Hash[]
     end
-    memo :__attribute_default
+
+    def __required_attributes
+      @__required_attributes ||= []
+    end
   end
 
   # Instance Definition
 
-  extend Memorandum
-
   def initialize **attributes
-    self.class.attributes.each do |attribute|
-      next unless attributes.key? attribute
+    klass = self.class
+
+    # check for missing required attributes
+    klass
+      .attributes
+      .select do |name|
+        next false unless klass.__required_attributes.include? name
+        !attributes.key? name
+      end
+      .tap do |missing_attributes|
+        next if missing_attributes.empty?
+        raise MissingRequiredAttributesError.new klass, missing_attributes
+      end
+
+    # store provided attributes
+    klass.attributes.each do |attribute|
+      required = klass.__required_attributes.include? attribute
+      provided = attributes.key? attribute
+
+      raise MissingRequiredAttributeError.new klass, attribute \
+        if required && !provided
+
+      next unless provided
 
       value = attributes[attribute].freeze
       __attribute_has_value?[attribute] = true
@@ -94,7 +119,6 @@ class Holotype
   private
 
   def __attribute_has_value?
-    Hash[]
+    @__attribute_has_value ||= Hash.new { |_| false }
   end
-  memo :__attribute_has_value?
 end

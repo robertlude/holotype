@@ -24,23 +24,25 @@ describe Holotype do
   # Lets
 
   junklet *%i[
-    attribute_a_name
     attribute_a_value
-    attribute_b_name
     attribute_b_value
     new_attribute_b_value
   ]
 
+  let(:attribute_a_name)     { "attribute_a_name_#{junk}".to_sym }
+  let(:attribute_b_name)     { "attribute_b_name_#{junk}".to_sym }
+  let(:error_class)          { described_class::MissingRequiredAttributesError }
   let(:instance_attribute_a) { test_instance.public_send attribute_a_name }
+  let(:test_class_name)      { junk }
   let(:test_instance)        { test_class.new **instance_attributes }
 
   let :additional_attributes do
-    Hash attribute_b_name.to_sym => new_attribute_b_value
+    Hash attribute_b_name => new_attribute_b_value
   end
 
   let :instance_attributes do
     Hash[
-      attribute_a_name.to_sym => attribute_a_value
+      attribute_a_name => attribute_a_value
     ]
   end
 
@@ -66,6 +68,12 @@ describe Holotype do
     end
   end
 
+  let :test_class_with_required_attribute do
+    make_test_class do |test_class|
+      test_class.send :attribute, attribute_a_name, required: true
+    end
+  end
+
   # Wrappers
 
   before { BlockWatcher.reset }
@@ -77,7 +85,7 @@ describe Holotype do
     let(:test_class)       { test_class_with_basic_attribute }
 
     it 'creates an accessor for the attribute' do
-      expect(instance_methods).to match_array [ attribute_a_name.to_sym ]
+      expect(instance_methods).to match_array [ attribute_a_name ]
     end
 
     it 'accepts the attribute in the initializer with a Symbol key' do
@@ -108,6 +116,19 @@ describe Holotype do
         expect(BlockWatcher.total_calls).to eq 0
         expect(instance_attribute_a).to eq :default_value
         expect(BlockWatcher.total_calls).to eq 1
+      end
+    end
+
+    context 'when given option `required: true`' do
+      let(:instance_attributes) { Hash[] }
+      let(:test_class)          { test_class_with_required_attribute }
+
+      it 'requires that attribute to be provided for creating an instance' do
+        expect { test_instance }
+          .to raise_error error_class do |error|
+            expect(error.attributes).to     eq [ attribute_a_name ]
+            expect(error.original_class).to be test_class
+          end
       end
     end
   end
@@ -150,7 +171,7 @@ describe Holotype do
     let(:test_class) { test_class_with_basic_attribute }
 
     it 'returns a hash of attributes and values' do
-      expect(result).to eq Hash attribute_a_name.to_sym => attribute_a_value
+      expect(result).to eq Hash attribute_a_name => attribute_a_value
     end
 
     it 'returns a hash acceptable for creating an equal instance' do

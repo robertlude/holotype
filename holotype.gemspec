@@ -27,7 +27,6 @@ Gem::Specification.new do |gem_specification|
       :'rspec-junklet' => '~> 2.0',
     ],
     runtime: Hash[
-      memorandum: '~> 2.1',
     ],
   ]
 
