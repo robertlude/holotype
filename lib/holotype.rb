@@ -9,35 +9,23 @@ class Holotype
 
   class << self
     def attribute name, **options, &default
-      # symbolize the name
+      # symbolize name
       name = name.to_sym
 
-      # remember the attribute
-      attributes << name
+      # create attribute defintion
+      attribute = Attribute.new name, options, &default
 
-      # store the default block if supplied
-      __attribute_default[name] = default if default
-
-      # remember if the attribute is required
-      __required_attributes << name if options[:required]
+      # store the attribute definition
+      attributes[name] = attribute
 
       # create an attribute reader
       define_method name do
-        internal_name = "@#{name}"
-
         # return the value if there is one
-        next instance_variable_get internal_name \
-          if __attribute_has_value?[name]
+        next __attribute_get name if __attribute_has_value?[name]
 
         # get a default if a default block was given
-        if (default_proc = self.class.__attribute_default[name])
-          value = default_proc.call
-
-          instance_variable_set internal_name, value
-          __attribute_has_value?[name] = true
-
-          next value
-        end
+        default_proc = attribute.default_proc
+        next __attribute_set name, default_proc.call.freeze if default_proc
 
         # no set value and no default block means no value
         nil
@@ -45,49 +33,15 @@ class Holotype
     end
 
     def attributes
-      @attributes ||= []
-    end
-
-    def __attribute_default
-      @__attribute_default ||= Hash[]
-    end
-
-    def __required_attributes
-      @__required_attributes ||= []
+      @attributes ||= Hash[]
     end
   end
 
   # Instance Definition
 
   def initialize **attributes
-    klass = self.class
-
-    # check for missing required attributes
-    klass
-      .attributes
-      .select do |name|
-        next false unless klass.__required_attributes.include? name
-        !attributes.key? name
-      end
-      .tap do |missing_attributes|
-        next if missing_attributes.empty?
-        raise MissingRequiredAttributesError.new klass, missing_attributes
-      end
-
-    # store provided attributes
-    klass.attributes.each do |attribute|
-      required = klass.__required_attributes.include? attribute
-      provided = attributes.key? attribute
-
-      raise MissingRequiredAttributeError.new klass, attribute \
-        if required && !provided
-
-      next unless provided
-
-      value = attributes[attribute].freeze
-      __attribute_has_value?[attribute] = true
-      instance_variable_set "@#{attribute}", value
-    end
+    __check_for_missing_required attributes
+    __store attributes
   end
 
   def frozen?
@@ -96,8 +50,8 @@ class Holotype
 
   def to_hash
     Hash[
-      self.class.attributes.map do |attribute|
-        [attribute, public_send(attribute)]
+      self.class.attributes.map do |name, _|
+        [name, public_send(name)]
       end
     ]
   end
@@ -105,9 +59,9 @@ class Holotype
   def == other
     return false unless self.class == other.class
 
-    self.class.attributes.each do |attribute|
-      self_value  = self.public_send attribute
-      other_value = other.public_send attribute
+    self.class.attributes.each do |name, _|
+      self_value  = self.public_send name
+      other_value = other.public_send name
 
       return false unless self_value == other_value
     end
@@ -120,6 +74,42 @@ class Holotype
   end
 
   private
+
+  def __check_for_missing_required attributes
+    self
+      .class
+      .attributes
+      .keys
+      .select do |name|
+        # select missing required attribute names
+        next false unless self.class.attributes[name].required?
+        !attributes.key? name
+      end
+      .tap do |missing_attributes|
+        next if missing_attributes.empty?
+        raise MissingRequiredAttributesError.new self.class, missing_attributes
+      end
+  end
+
+  def __store attributes
+    self
+      .class
+      .attributes
+      .each do |name, _|
+        next unless attributes.key? name
+        __attribute_set name, attributes[name].freeze
+      end
+  end
+
+  def __attribute_get name
+    instance_variable_get "@#{name}"
+  end
+
+  def __attribute_set name, value
+    instance_variable_set "@#{name}", value
+    __attribute_has_value?[name] = true
+    value
+  end
 
   def __attribute_has_value?
     @__attribute_has_value ||= Hash.new { |_| false }

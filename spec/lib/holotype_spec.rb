@@ -126,7 +126,7 @@ describe Holotype do
       it 'requires that attribute to be provided for creating an instance' do
         expect { test_instance }
           .to raise_error error_class do |error|
-            expect(error.attributes).to     eq [ attribute_a_name ]
+            expect(error.attributes).to eq [ attribute_a_name ]
             expect(error.original_class).to be test_class
           end
       end
