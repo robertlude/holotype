@@ -47,6 +47,27 @@ describe Holotype do
     end
   end
 
+  describe '#==' do
+    let(:other_instance) { test_class.new **other_attributes }
+    let(:result)         { test_instance == other_instance }
+
+    context 'when the objects have equal attribute values' do
+      let(:other_attributes) { Hash attribute_name.to_sym => attribute_value }
+
+      it 'returns `true`' do
+        expect(result).to be true
+      end
+    end
+
+    context 'when the objects have differing attribute values' do
+      let(:other_attributes) { Hash attribute_name.to_sym => junk }
+
+      it 'returns `false`' do
+        expect(result).to be false
+      end
+    end
+  end
+
   describe "#to_hash" do
     let(:result) { test_instance.to_hash }
 
@@ -54,6 +75,8 @@ describe Holotype do
       expect(result).to eq instance_attributes
     end
 
-    xit 'returns a hash acceptable for creating an equal instance'
+    it 'returns a hash acceptable for creating an equal instance' do
+      expect(test_class.new result).to eq test_instance
+    end
   end
 end

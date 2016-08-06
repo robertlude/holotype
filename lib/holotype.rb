@@ -34,4 +34,17 @@ class Holotype
       end
     ]
   end
+
+  def == other
+    return false unless self.class == other.class
+
+    self.class.attributes.each do |attribute|
+      self_value  = self.public_send attribute
+      other_value = other.public_send attribute
+
+      return false unless self_value == other_value
+    end
+
+    true
+  end
 end
