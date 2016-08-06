@@ -1,28 +1,28 @@
 describe Holotype do
   # Lets
+  junklet :attribute_name, :attribute_value
 
-  let(:attributes)    { Hash[] }
-  let(:test_class)    { Class.new described_class }
-  let(:test_instance) { test_class.new **attributes }
+  let(:attributes)         { Hash attribute_name.to_sym => attribute_value }
+  let(:instance_attribute) { test_instance.public_send attribute_name }
+  let(:test_class)         { basic_test_class }
+  let(:test_instance)      { test_class.new **attributes }
+
+  let :instance_attributes do
+    Hash attribute_name.to_sym => attribute_value
+  end
+
+  let :basic_test_class do
+    Class
+      .new(described_class)
+      .tap do |test_class|
+        test_class.send :attribute, attribute_name
+      end
+  end
 
   # Class Method Tests
 
   describe '.attribute' do
-    junklet :attribute_name, :attribute_value
-
-    let(:attributes)         { Hash attribute_name.to_sym => attribute_value }
-    let(:instance_methods)   { test_class.instance_methods false }
-    let(:instance_attribute) { test_instance.public_send attribute_name }
-
-    let :instance_attributes do
-      Hash attribute_name => attribute_value
-    end
-
-    let :test_class do
-      Class.new(described_class).tap do |test_class|
-        test_class.send :attribute, attribute_name
-      end
-    end
+    let(:instance_methods) { test_class.instance_methods false }
 
     it 'creates an accessor for the attribute' do
       expect(instance_methods).to match_array [ attribute_name.to_sym ]
@@ -45,5 +45,15 @@ describe Holotype do
     it 'returns `true`' do
       expect(result).to be true
     end
+  end
+
+  describe "#to_hash" do
+    let(:result) { test_instance.to_hash }
+
+    it 'returns a hash of attributes and values' do
+      expect(result).to eq instance_attributes
+    end
+
+    xit 'returns a hash acceptable for creating an equal instance'
   end
 end
