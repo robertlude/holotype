@@ -1,22 +1,6 @@
 describe Holotype do
   # Helpers
 
-  class BlockWatcher
-    class << self
-      def record_call
-        @total_calls = total_calls + 1
-      end
-
-      def total_calls
-        @total_calls || 0
-      end
-
-      def reset
-        @total_calls = 0
-      end
-    end
-  end
-
   def make_test_class &block
     Class.new(described_class).tap &block
   end
@@ -26,15 +10,19 @@ describe Holotype do
   junklet *%i[
     attribute_a_value
     attribute_b_value
+    default_value
     new_attribute_b_value
   ]
 
   let(:attribute_a_name)     { "attribute_a_name_#{junk}".to_sym }
   let(:attribute_b_name)     { "attribute_b_name_#{junk}".to_sym }
-  let(:error_class)          { described_class::MissingRequiredAttributesError }
   let(:instance_attribute_a) { test_instance.public_send attribute_a_name }
   let(:test_class_name)      { junk }
   let(:test_instance)        { test_class.new **instance_attributes }
+
+  let :missing_required_attribute_error do
+    described_class::MissingRequiredAttributesError
+  end
 
   let :additional_attributes do
     Hash attribute_b_name => new_attribute_b_value
@@ -59,7 +47,7 @@ describe Holotype do
     end
   end
 
-  let :test_class_with_attribute_default do
+  let :test_class_with_attribute_default_block do
     make_test_class do |test_class|
       test_class.send(:attribute, attribute_a_name) do
         BlockWatcher.record_call
@@ -74,49 +62,22 @@ describe Holotype do
     end
   end
 
-  # Wrappers
-
-  before { BlockWatcher.reset }
-
   # Class Method Tests
 
   describe '.attribute' do
     let(:instance_methods) { test_class.instance_methods false }
     let(:test_class)       { test_class_with_basic_attribute }
 
-    it 'creates an accessor for the attribute' do
+    it 'creates an accessor for the attributes' do
       expect(instance_methods).to match_array [ attribute_a_name ]
     end
 
-    it 'accepts the attribute in the initializer with a Symbol key' do
+    it 'accepts attribute in the initializer with a Symbol key' do
       expect(instance_attribute_a).to eq attribute_a_value
     end
 
-    it 'freezes the value given in the initializer' do
+    it 'freezes values given in the initializer' do
       expect(instance_attribute_a).to be_frozen
-    end
-
-    context 'when given no block' do
-      let(:instance_attributes) { Hash[] }
-      let(:test_class)          { test_class_with_basic_attribute }
-
-      it 'provides no default value' do
-        expect(instance_attribute_a).to be nil
-      end
-    end
-
-    context 'when given a block' do
-      let(:instance_attributes) { Hash[] }
-      let(:test_class)          { test_class_with_attribute_default }
-
-      it 'lazily calls the block for the default value' do
-        # initialize the instance before calling the method
-        test_instance
-
-        expect(BlockWatcher.total_calls).to eq 0
-        expect(instance_attribute_a).to eq :default_value
-        expect(BlockWatcher.total_calls).to eq 1
-      end
     end
 
     context 'when given option `required: true`' do
@@ -125,10 +86,21 @@ describe Holotype do
 
       it 'requires that attribute to be provided for creating an instance' do
         expect { test_instance }
-          .to raise_error error_class do |error|
+          .to raise_error missing_required_attribute_error do |error|
             expect(error.attributes).to eq [ attribute_a_name ]
             expect(error.original_class).to be test_class
           end
+      end
+    end
+
+    context 'when given a default block' do
+      let(:instance_attributes) { Hash[] }
+      let(:test_class)          { test_class_with_attribute_default_block }
+
+      it 'does not call that block more than once to get a value' do
+        test_instance.public_send attribute_a_name
+        test_instance.public_send attribute_a_name
+        expect(BlockWatcher.total_calls).to be 1
       end
     end
   end

@@ -23,12 +23,8 @@ class Holotype
         # return the value if there is one
         next __attribute_get name if __attribute_has_value?[name]
 
-        # get a default if a default block was given
-        default_proc = attribute.default_proc
-        next __attribute_set name, default_proc.call.freeze if default_proc
-
-        # no set value and no default block means no value
-        nil
+        # use the default value
+        next __attribute_set name, attribute.default(self)
       end
     end
 
@@ -79,11 +75,11 @@ class Holotype
     self
       .class
       .attributes
-      .keys
-      .select do |name|
+      .flat_map do |name, attribute|
         # select missing required attribute names
-        next false unless self.class.attributes[name].required?
-        !attributes.key? name
+        next [] unless attribute.required?
+        next [] if attributes.key? name
+        [name]
       end
       .tap do |missing_attributes|
         next if missing_attributes.empty?

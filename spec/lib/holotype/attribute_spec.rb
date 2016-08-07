@@ -13,11 +13,10 @@ describe Holotype::Attribute do
 
   let(:default_block) { }
   let(:name)          { "name_#{junk}".to_sym }
+  let(:options)       { Hash[] }
 
-  let :options do
-    Hash[
-      required: false
-    ]
+  let :default_conflict_error do
+    described_class::DefaultConflictError
   end
 
   # Class Method Tests
@@ -25,22 +24,6 @@ describe Holotype::Attribute do
   describe '.new' do
     it 'stores the name' do
       expect(subject.name).to be name
-    end
-
-    context 'given no block' do
-      let(:default_block) { }
-
-      it 'does not store a default proc' do
-        expect(subject.default_proc).to be nil
-      end
-    end
-
-    context 'given a block' do
-      let(:default_block) { -> { :value_from_default_block } }
-
-      it 'stores the block as `default_proc`' do
-        expect(subject.default_proc).to be default_block
-      end
     end
 
     context 'given no option `required`' do
@@ -57,6 +40,73 @@ describe Holotype::Attribute do
 
       it 'stores the value' do
         expect(subject.required?).to be required
+      end
+    end
+
+    context 'given option `default` and a block' do
+      let(:default_block) { -> { } }
+      let(:options)       { Hash default: junk }
+
+      it 'raises an error' do
+        expect { subject }.to raise_error default_conflict_error
+      end
+    end
+  end
+
+  # Instance Method Tests
+
+  describe '#required?' do
+    let(:result) { subject.required? }
+
+    context 'when the attribute was created with option `required: true`' do
+      let(:options) { Hash required: true }
+
+      it 'returns `true`' do
+        expect(result).to be true
+      end
+    end
+
+    context 'when the attribute was not created with option `required: true`' do
+      it 'returns `false`' do
+        expect(result).to be false
+      end
+    end
+  end
+
+  describe '#default' do
+    let(:receiver) { double x: 2 }
+    let(:result)   { subject.default receiver }
+
+    context 'when the attribute was created with a block' do
+      let :default_block do
+        -> do
+          BlockWatcher.record_call
+          x ** 4
+        end
+      end
+
+      it 'lazily calls the block in the context of the receiver' do
+        subject # initialize subject
+
+        expect(BlockWatcher.total_calls).to be 0
+        expect(result).to be 16
+        expect(BlockWatcher.total_calls).to be 1
+      end
+    end
+
+    context 'when the attribute was created with option `default`' do
+      junklet :default
+
+      let(:options) { Hash default: default }
+
+      it 'returns the specified default value' do
+        expect(result).to eq default
+      end
+    end
+
+    context 'when the attribute was not created with either type of default' do
+      it 'returns `nil`' do
+        expect(result).to be nil
       end
     end
   end
