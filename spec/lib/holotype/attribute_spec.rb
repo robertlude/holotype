@@ -110,4 +110,29 @@ describe Holotype::Attribute do
       end
     end
   end
+
+  describe '#normalize' do
+    let(:result) { subject.normalize value }
+    let(:value)  { Hash a: 1 }
+
+    let :attribute_class do
+      Class.new(Holotype) { attribute :a }
+    end
+
+    context 'when the attribute was created with option `class`' do
+      let(:options) { Hash class: attribute_class }
+
+      it 'converts the value into an instance of that class' do
+        expect(result).to be_a attribute_class
+        expect(result.a).to be 1
+      end
+    end
+
+    context 'when the attribute was created without without option `class`' do
+      it 'returns the frozen given value' do
+        expect(result).to be_frozen
+        expect(result).to eq value
+      end
+    end
+  end
 end

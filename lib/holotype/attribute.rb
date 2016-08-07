@@ -5,8 +5,9 @@ class Holotype
     attr_reader :name
 
     def initialize name, **options, &default_block
-      @name          = name
-      @required      = options.fetch :required, false
+      @klass    = options[:class]
+      @name     = name
+      @required = options.fetch :required, false
 
       if default_block
         raise DefaultConflictError.new if options.key? :default
@@ -21,9 +22,17 @@ class Holotype
     def default receiver
       case @default_type
       when :constant then @default
-      when :dynamic  then receiver.instance_exec &@default
+      when :dynamic  then receiver.instance_exec(&@default).freeze
       else nil
       end
+    end
+
+    def normalize value
+      if @klass
+        @klass.new value
+      else
+        value
+      end.freeze
     end
 
     def required?
