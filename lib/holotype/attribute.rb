@@ -29,7 +29,7 @@ class Holotype
 
     def normalize value
       if @klass
-        @klass.new value
+        @klass.new **(symbolize_keys value)
       else
         value
       end.freeze
@@ -37,6 +37,16 @@ class Holotype
 
     def required?
       !!@required
+    end
+
+    def has_class?
+      !!@klass
+    end
+
+    private
+
+    def symbolize_keys hash
+      Hash[hash.map { |key, value| [key.to_sym, value] }]
     end
   end
 end

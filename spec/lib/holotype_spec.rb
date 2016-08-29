@@ -1,115 +1,194 @@
 describe Holotype do
+  # Constants
+
+  ATTRIBUTE_IDS = [ :a, :b, :c ].freeze
+
   # Helpers
 
-  def make_test_class &block
-    Class.new(described_class).tap &block
+  def map_attributes
+    Hash[
+      ATTRIBUTE_IDS.map do |id|
+        key   = id
+        value = yield id
+
+        [key, value]
+      end
+    ]
+  end
+
+  def junk_map_attributes key
+    map_attributes { |id| "attribute_#{id}_#{key}_#{junk}".to_sym }
+  end
+
+  def mock_attribute_objects
+    ATTRIBUTE_IDS.each do |id|
+      expect(described_class::Attribute)
+        .to receive(:new)
+        .with(
+          attribute_names[id],
+          **attribute_options[id],
+          &attribute_blocks[id]
+        )
+        .and_return attribute_object_doubles[id]
+    end
   end
 
   # Lets
 
-  junklet *%i[
-    attribute_a_value
-    attribute_b_value
-    default_value
-    new_attribute_b_value
-  ]
+  let(:attribute_blocks)      { map_attributes { |_| } }
+  let(:attribute_defaults)    { junk_map_attributes 'default_value' }
+  let(:attribute_names)       { junk_map_attributes 'name' }
+  let(:attribute_options)     { map_attributes { |_| Hash[] } }
+  let(:given_attributes)      { junk_map_attributes 'given_value' }
+  let(:normalized_attributes) { junk_map_attributes 'normalized_value' }
+  let(:test_instance)         { test_class.new **instance_attributes }
 
-  let(:attribute_a_name)     { "attribute_a_name_#{junk}".to_sym }
-  let(:attribute_b_name)     { "attribute_b_name_#{junk}".to_sym }
-  let(:instance_attribute_a) { test_instance.public_send attribute_a_name }
-  let(:test_class_name)      { junk }
-  let(:test_instance)        { test_class.new **instance_attributes }
+  let :attribute_object_doubles do
+    map_attributes do |id|
+      is_required = attribute_options[id].fetch(:required, false)
 
-  let :missing_required_attribute_error do
-    described_class::MissingRequiredAttributesError
+      double default:   attribute_defaults[id],
+             normalize: normalized_attributes[id],
+             required?: is_required
+    end
   end
 
-  let :additional_attributes do
-    Hash attribute_b_name => new_attribute_b_value
+  let :instance_attribute_values do
+    map_attributes { |id| test_instance.send attribute_names[id] }
   end
 
   let :instance_attributes do
     Hash[
-      attribute_a_name => attribute_a_value
+      ATTRIBUTE_IDS.map do |id|
+        name  = attribute_names[id]
+        value = given_attributes[id]
+
+        [name, value]
+      end
     ]
   end
 
-  let :test_class_with_basic_attribute do
-    make_test_class do |test_class|
-      test_class.send :attribute, attribute_a_name
-    end
-  end
-
-  let :test_class_with_two_attributes do
-    make_test_class do |test_class|
-      test_class.send :attribute, attribute_a_name
-      test_class.send :attribute, attribute_b_name
-    end
-  end
-
-  let :test_class_with_attribute_default_block do
-    make_test_class do |test_class|
-      test_class.send(:attribute, attribute_a_name) do
-        BlockWatcher.record_call
-        :default_value
+  let :test_class do
+    Class.new(described_class).tap do |klass|
+      ATTRIBUTE_IDS.each do |id|
+        klass.send :attribute,
+                   attribute_names[id],
+                   **attribute_options[id],
+                   &attribute_blocks[id]
       end
-    end
-  end
-
-  let :test_class_with_required_attribute do
-    make_test_class do |test_class|
-      test_class.send :attribute, attribute_a_name, required: true
     end
   end
 
   # Class Method Tests
 
   describe '.attribute' do
-    let(:instance_methods) { test_class.instance_methods false }
-    let(:test_class)       { test_class_with_basic_attribute }
-
-    it 'creates an accessor for the attributes' do
-      expect(instance_methods).to match_array [ attribute_a_name ]
+    it 'creates a Holotype::Attribute object for each attribute' do
+      mock_attribute_objects
+      test_class
     end
 
-    it 'accepts attribute in the initializer with a Symbol key' do
-      expect(instance_attribute_a).to eq attribute_a_value
-    end
-
-    it 'freezes values given in the initializer' do
-      expect(instance_attribute_a).to be_frozen
-    end
-
-    context 'when given option `required: true`' do
-      let(:instance_attributes) { Hash[] }
-      let(:test_class)          { test_class_with_required_attribute }
-
-      it 'requires that attribute to be provided for creating an instance' do
-        expect { test_instance }
-          .to raise_error missing_required_attribute_error do |error|
-            expect(error.attributes).to eq [ attribute_a_name ]
-            expect(error.original_class).to be test_class
-          end
+    it 'generates a getter for each attribute' do
+      attribute_names.values.each do |attribute_name|
+        expect(test_instance).to respond_to attribute_name
       end
     end
 
-    context 'when given a default block' do
-      let(:instance_attributes) { Hash[] }
-      let(:test_class)          { test_class_with_attribute_default_block }
+    describe 'generated getter' do
+      before { mock_attribute_objects }
 
-      it 'does not call that block more than once to get a value' do
-        test_instance.public_send attribute_a_name
-        test_instance.public_send attribute_a_name
-        expect(BlockWatcher.total_calls).to be 1
+      shared_examples 'normalized values' do
+        it 'returns the normalized value' do
+          map_attributes do |attribute_id|
+            expect(test_instance.public_send attribute_names[attribute_id])
+              .to eq normalized_attributes[attribute_id]
+          end
+        end
+      end
+
+      context 'when the attribute has a value' do
+        include_examples 'normalized values'
+
+        it 'consults the associated Attribute object to normalize the value' do
+          map_attributes do |attribute_id|
+            expect(attribute_object_doubles[attribute_id])
+              .to receive(:normalize)
+              .with(given_attributes[attribute_id])
+          end
+
+          test_instance
+        end
+      end
+
+      context 'when the attribute does not have a value' do
+        let(:instance_attributes) { Hash[] }
+
+        include_examples 'normalized values'
+
+        it 'consults the associated Attribute object to normalize the value' do
+          map_attributes do |attribute_id|
+            expect(attribute_object_doubles[attribute_id])
+              .to receive(:normalize)
+              .with(attribute_defaults[attribute_id])
+
+            test_instance.public_send attribute_names[attribute_id]
+          end
+        end
+
+        it 'consults the associated Attribute object for a default value' do
+          map_attributes do |attribute_id|
+            test_instance.public_send attribute_names[attribute_id]
+
+            expect(attribute_object_doubles[attribute_id])
+              .to have_received(:default)
+              .with(test_instance)
+          end
+        end
       end
     end
   end
 
   # Instance Method Tests
 
+  describe '#initialize' do
+    it 'accepts attribute values' do
+      expect(instance_attribute_values).to eq given_attributes
+    end
+
+    it 'freezes values given in the initializer' do
+      expect(instance_attribute_values.values).to all be_frozen
+    end
+
+    context 'with required attributes' do
+      let(:required_attributes) { attribute_names.values_at *required_ids }
+      let(:required_ids)        { ATTRIBUTE_IDS.sample 2 }
+
+      before do
+        required_ids.each { |id| attribute_options[id].merge! required: true }
+      end
+
+      context 'when required attribute values are supplied' do
+        let(:instance_attributes) { Hash[] }
+
+        it 'raises an error' do
+          error_type = described_class::MissingRequiredAttributesError
+
+          expect { test_instance }.to raise_error error_type do |error|
+            expect(error.attributes).to match_array required_attributes
+            expect(error.original_class).to be test_class
+          end
+        end
+      end
+
+      context 'when each required value is supplied' do
+        it 'does not raise an error' do
+          expect { test_instance }.not_to raise_error
+        end
+      end
+    end
+  end
+
   describe '#frozen?' do
-    let(:result)     { test_instance.frozen? }
-    let(:test_class) { test_class_with_basic_attribute }
+    let(:result) { test_instance.frozen? }
 
     it 'returns `true`' do
       expect(result).to be true
@@ -119,7 +198,6 @@ describe Holotype do
   describe '#==' do
     let(:other_instance) { test_class.new **other_attributes }
     let(:result)         { test_instance == other_instance }
-    let(:test_class)     { test_class_with_two_attributes }
 
     context 'when the objects have equal attribute values' do
       let(:other_attributes) { instance_attributes }
@@ -130,7 +208,18 @@ describe Holotype do
     end
 
     context 'when the objects have differing attribute values' do
-      let(:other_attributes) { instance_attributes.merge additional_attributes }
+      let(:other_given_attributes) { junk_map_attributes 'other_value' }
+
+      let :other_attributes do
+        Hash[
+          ATTRIBUTE_IDS.map do |id|
+            name  = attribute_names[id]
+            value = other_given_attributes[id]
+
+            [name, value]
+          end
+        ]
+      end
 
       it 'returns `false`' do
         expect(result).to be false
@@ -139,11 +228,39 @@ describe Holotype do
   end
 
   describe '#to_hash' do
-    let(:result)     { test_instance.to_hash }
-    let(:test_class) { test_class_with_basic_attribute }
+    junklet :test_value_class_attribute_value
+
+    let(:attribute_with_class) { ATTRIBUTE_IDS.sample }
+    let(:result)               { test_instance.to_hash }
+
+    let :test_value_class_attribute_name do
+      "test_value_class_attribute_name_#{junk}".to_sym
+    end
+
+    let :test_value_class do
+      Class.new(described_class).tap do |klass|
+        klass.send :attribute, test_value_class_attribute_name
+      end
+    end
+
+    let :attribute_options do
+      super().tap do |attribute_options|
+        attribute_options
+        attribute_options[attribute_with_class] = Hash class: test_value_class
+        attribute_options
+      end
+    end
+
+    let :given_attributes do
+      super().tap do |given_attributes|
+        given_attributes[attribute_with_class] = Hash[
+          test_value_class_attribute_name => test_value_class_attribute_value
+        ]
+      end
+    end
 
     it 'returns a hash of attributes and values' do
-      expect(result).to eq Hash attribute_a_name => attribute_a_value
+      expect(result).to eq instance_attributes
     end
 
     it 'returns a hash acceptable for creating an equal instance' do
@@ -152,15 +269,28 @@ describe Holotype do
   end
 
   describe '#with' do
-    let(:result)     { test_instance.with additional_attributes }
-    let(:test_class) { test_class_with_two_attributes }
+    let(:missing_attribute) { ATTRIBUTE_IDS.sample }
+    let(:result)            { test_instance.with new_attributes }
 
-    it 'returns an instance with specified attributes set' do
-      expect(result.send attribute_b_name).to eq new_attribute_b_value
+    let :new_values do
+      junk_map_attributes('new_value').delete_if do |attribute_id|
+        attribute_id == missing_attribute
+      end
     end
 
-    it 'returns an instance with unspecified attributes inherited' do
-      expect(result.send attribute_a_name).to eq attribute_a_value
+    let :new_attributes do
+      Hash[
+        new_values.keys.map do |attribute_id|
+          name  = attribute_names[attribute_id]
+          value = new_values[attribute_id]
+
+          [name, value]
+        end
+      ]
+    end
+
+    it 'returns an instance with specified attributes set and unspecified attributes inherited' do
+      expect(result.to_hash).to eq instance_attributes.merge new_attributes
     end
   end
 end

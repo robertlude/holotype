@@ -24,7 +24,7 @@ class Holotype
         next __attribute_get name if __attribute_has_value?[name]
 
         # use the default value
-        next __attribute_set name, attribute.default(self)
+        __attribute_set name, attribute.default(self)
       end
     end
 
@@ -46,8 +46,13 @@ class Holotype
 
   def to_hash
     Hash[
-      self.class.attributes.map do |name, _|
-        [name, public_send(name)]
+      self.class.attributes.map do |name, attribute|
+        key   = name
+        value = public_send name
+
+        value = value.to_hash if attribute.has_class?
+
+        [key, value]
       end
     ]
   end
@@ -98,13 +103,20 @@ class Holotype
   end
 
   def __attribute_get name
-    instance_variable_get "@#{name}"
+    if __attribute_has_value?[name]
+      instance_variable_get "@#{name}"
+    else
+      __attribute_set name, self.class.attributes[name].default(self)
+    end
   end
 
   def __attribute_set name, value
-    instance_variable_set "@#{name}", value
+    normalized_value = self.class.attributes[name].normalize value
+
+    instance_variable_set "@#{name}", normalized_value
     __attribute_has_value?[name] = true
-    value
+
+    normalized_value
   end
 
   def __attribute_has_value?
