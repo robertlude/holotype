@@ -1,4 +1,4 @@
-describe Holotype::Attribute::DefaultConflictError do
+describe Holotype::Attribute::Definition::DefaultConflictError do
   # Subject
 
   subject { described_class.new }
@@ -9,8 +9,8 @@ describe Holotype::Attribute::DefaultConflictError do
     let(:result) { subject.message }
 
     it 'returns a descriptive error message' do
-      expect(result)
-        .to eq 'Attributes cannot have both a default value and a default block'
+      expect(result).to eq 'Attribute definitions cannot have both a default ' \
+                           'value and a default block'
     end
   end
 end

@@ -13,7 +13,7 @@ class Holotype
       name = name.to_sym
 
       # create attribute defintion
-      attribute = Attribute.new name, options, &default
+      attribute = Attribute::Definition.new name, options, &default
 
       # store the attribute definition
       attributes[name] = attribute

@@ -22,7 +22,7 @@ describe Holotype do
 
   def mock_attribute_objects
     ATTRIBUTE_IDS.each do |id|
-      expect(described_class::Attribute)
+      expect(described_class::Attribute::Definition)
         .to receive(:new)
         .with(
           attribute_names[id],
@@ -82,7 +82,7 @@ describe Holotype do
   # Class Method Tests
 
   describe '.attribute' do
-    it 'creates a Holotype::Attribute object for each attribute' do
+    it 'creates a Holotype::Attribute::Definition object for each attribute' do
       mock_attribute_objects
       test_class
     end
@@ -108,7 +108,7 @@ describe Holotype do
       context 'when the attribute has a value' do
         include_examples 'normalized values'
 
-        it 'consults the associated Attribute object to normalize the value' do
+        it 'consults the associated Attribute::Definition object to normalize the value' do
           map_attributes do |attribute_id|
             expect(attribute_object_doubles[attribute_id])
               .to receive(:normalize)
@@ -124,7 +124,7 @@ describe Holotype do
 
         include_examples 'normalized values'
 
-        it 'consults the associated Attribute object to normalize the value' do
+        it 'consults the associated Attribute::Definition object to normalize the value' do
           map_attributes do |attribute_id|
             expect(attribute_object_doubles[attribute_id])
               .to receive(:normalize)
@@ -134,7 +134,7 @@ describe Holotype do
           end
         end
 
-        it 'consults the associated Attribute object for a default value' do
+        it 'consults the associated Attribute::Definition object for a default value' do
           map_attributes do |attribute_id|
             test_instance.public_send attribute_names[attribute_id]
 
