@@ -5,10 +5,11 @@
 
 class Holotype
   class Attribute
-    attr_reader :definition
+    attr_reader :definition, :owner
 
-    def initialize definition, **options
+    def initialize owner, definition, **options
       @definition = definition
+      @owner      = owner
 
       set_value options[:value] if options.key? :value
     end
@@ -18,7 +19,7 @@ class Holotype
     end
 
     def value
-      self.value = definition.default self unless @has_value
+      set_value definition.default owner unless @has_value
       @value
     end
 

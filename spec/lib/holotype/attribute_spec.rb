@@ -3,9 +3,9 @@ describe Holotype::Attribute do
 
   subject do
     if create_with_value
-      described_class.new definition, value: given_value
+      described_class.new owner, definition, value: given_value
     else
-      described_class.new definition
+      described_class.new owner, definition
     end
   end
 
@@ -19,6 +19,7 @@ describe Holotype::Attribute do
 
   let(:attribute_read_only) { false }
   let(:create_with_value)   { true }
+  let(:owner)               { double }
 
   let :definition do
     double(
@@ -70,7 +71,7 @@ describe Holotype::Attribute do
         expect(definition)
           .to receive(:default)
           .once
-          .with(subject)
+          .with(owner)
           .and_return(default_value)
 
         expect(definition)
