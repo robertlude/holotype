@@ -67,7 +67,7 @@ class Holotype
       private
 
       def normalize_single value
-        if has_class?
+        if has_class? && !value.nil? # TODO test value.nil? cases
           @klass.new **(symbolize_keys value)
         else
           value
@@ -83,7 +83,8 @@ class Holotype
       end
 
       def normalize_array_like_collection values
-        normalized_values = values.map { |value| normalize_single value }
+        normalized_values = (values || []) # TODO test this
+                              .map { |value| normalize_single value }
 
         if has_collection_class?
           @collection_class.new normalized_values

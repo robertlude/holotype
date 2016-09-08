@@ -83,8 +83,8 @@ class Holotype
   attr_reader :attributes
 
   def initialize **attributes
-    __check_for_missing_required attributes
-    __store attributes
+    __holotype_check_for_missing_required attributes
+    __holotype_store attributes
   end
 
   def frozen?
@@ -97,11 +97,7 @@ class Holotype
         .map do |key, attribute|
           definition = attribute.definition
 
-          value = if definition.has_class? || definition.has_collection_class?
-                    attribute.value.to_hash
-                  else
-                    attribute.value
-                  end
+          value = __holotype_hashify attribute.value
 
           [key, value]
         end
@@ -122,7 +118,18 @@ class Holotype
 
   private
 
-  def __check_for_missing_required attributes
+  def __holotype_hashify value
+    # TODO test this
+    if value.respond_to? :to_hash
+      value.to_hash
+    elsif value.kind_of? Enumerable
+      value.map { |value| __hashify value }
+    else
+      value
+    end
+  end
+
+  def __holotype_check_for_missing_required attributes
     self
       .class
       .attributes
@@ -141,7 +148,7 @@ class Holotype
       end
   end
 
-  def __store attributes
+  def __holotype_store attributes
     @attributes = Hash[
                     self
                       .class
