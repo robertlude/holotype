@@ -127,11 +127,11 @@ describe Holotype::Attribute::Definition do
     end
   end
 
-  describe '#read_only??' do
+  describe '#read_only?' do
     let(:result) { subject.read_only? }
 
     context 'when the attribute was created with option `read_only: true`' do
-      let(:options) { Hash immutable: true }
+      let(:options) { Hash read_only: true }
 
       it 'returns `true`' do
         expect(result).to be true

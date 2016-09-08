@@ -1,7 +1,7 @@
 describe Holotype::AttributesAlreadyDefinedError do
   # Subject
 
-  subject { described_class.new name }
+  subject { described_class.new }
 
   # Tests
 

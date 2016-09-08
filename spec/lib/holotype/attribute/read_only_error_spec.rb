@@ -29,8 +29,8 @@ describe Holotype::Attribute::ReadOnlyError do
     let(:result) { subject.message }
 
     it 'returns a descriptive message' do
-      expect(result).to eq "Cannot modify value of `#{name}` in immutable " \
-                           "class".freeze
+      expect(result).to eq "Attribute `#{name}` is read-only and may not be "\
+                           "written to"
     end
 
     it 'returns a frozen value' do

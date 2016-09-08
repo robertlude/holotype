@@ -16,9 +16,16 @@ class Holotype
 
       # prepare options
       processed_options = if immutable?
-                            options.merge immutable: true
+                            [
+                              __default_attribute_options,
+                              options,
+                              IMMUTABLE_OPTION,
+                            ].reduce :merge
                           else
-                            options
+                            [
+                              __default_attribute_options,
+                              options,
+                            ].reduce :merge
                           end
 
       # create attribute definition
@@ -56,6 +63,18 @@ class Holotype
 
     def immutable?
       !!@immutable
+    end
+
+    def default_attribute_options **options
+      @default_attribute_options = options.freeze
+    end
+
+    private
+
+    IMMUTABLE_OPTION = Hash[immutable: true].freeze
+
+    def __default_attribute_options
+      @default_attribute_options || Hash[]
     end
   end
 

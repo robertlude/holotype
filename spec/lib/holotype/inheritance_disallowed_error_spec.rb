@@ -1,7 +1,7 @@
 describe Holotype::InheritanceDisallowedError do
   # Subject
 
-  subject { described_class.new name }
+  subject { described_class.new }
 
   # Tests
 

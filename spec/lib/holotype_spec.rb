@@ -21,18 +21,30 @@ describe Holotype do
   end
 
   def mock_attribute_objects
-    other_options = if make_immutable
+    base_options = if defined? default_attribute_options
+                     default_attribute_options
+                   else
+                     Hash[]
+                   end
+
+    final_options = if make_immutable
                       Hash immutable: true
                     else
                       Hash[]
                     end
 
     ATTRIBUTE_IDS.each do |id|
+      options = [
+                  base_options,
+                  attribute_options[id],
+                  final_options,
+                ].reduce :merge
+
       expect(described_class::Attribute::Definition)
         .to receive(:new)
         .with(
           attribute_names[id],
-          **(attribute_options[id].merge other_options),
+          **options,
           &attribute_blocks[id]
         )
         .and_return attribute_object_doubles[id]
@@ -79,6 +91,9 @@ describe Holotype do
   let :test_class do
     Class.new(described_class).tap do |klass|
       klass.send :make_immutable if make_immutable
+
+      klass.send :default_attribute_options, **default_attribute_options \
+        if defined? default_attribute_options
 
       ATTRIBUTE_IDS.each do |id|
         klass.send :attribute,
@@ -201,6 +216,15 @@ describe Holotype do
       it 'returns `false`' do
         expect(result).to be false
       end
+    end
+  end
+
+  describe '.default_attribute_options' do
+    let(:default_attribute_options) { Hash junk.to_sym => junk }
+
+    it 'uses the supplied options as defaults' do
+      mock_attribute_objects
+      test_class
     end
   end
 

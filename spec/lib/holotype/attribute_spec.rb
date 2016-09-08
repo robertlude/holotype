@@ -17,16 +17,18 @@ describe Holotype::Attribute do
     normalized_value
   ]
 
-  let(:attribute_collection)       { false }
-  let(:attribute_read_only)        { false }
-  let(:create_with_value)          { true }
-  let(:owner)                      { double }
+  let(:attribute_collection) { false }
+  let(:attribute_read_only)  { false }
+  let(:attribute_immutable)  { false }
+  let(:create_with_value)    { true }
+  let(:owner)                { double }
 
   let :definition do
     properties = Hash[
       collection: attribute_collection,
       name:       attribute_name,
       read_only?: attribute_read_only,
+      immutable?: attribute_immutable,
     ].tap do |properties|
       properties[:collection_class] = attribute_collection_class \
         if defined? attribute_collection_class
@@ -125,6 +127,17 @@ describe Holotype::Attribute do
     context 'when the attribute is read only' do
       let(:attribute_read_only) { true }
       let(:error_class)         { described_class::ReadOnlyError }
+
+      it 'raises an error' do
+        expect { result }.to raise_error error_class do |error|
+          expect(error.name).to eq attribute_name
+        end
+      end
+    end
+
+    context 'when the attribute is immutable' do
+      let(:attribute_immutable) { true }
+      let(:error_class)         { described_class::ImmutableValueError }
 
       it 'raises an error' do
         expect { result }.to raise_error error_class do |error|
