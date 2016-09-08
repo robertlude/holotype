@@ -109,6 +109,42 @@ describe Holotype::Attribute::Definition do
     end
   end
 
+  describe '#immutable?' do
+    let(:result) { subject.immutable? }
+
+    context 'when the attribute was created with option `immutable: true`' do
+      let(:options) { Hash immutable: true }
+
+      it 'returns `true`' do
+        expect(result).to be true
+      end
+    end
+
+    context 'when the attribute was not created with option `immutable: true`' do
+      it 'returns `false`' do
+        expect(result).to be false
+      end
+    end
+  end
+
+  describe '#read_only??' do
+    let(:result) { subject.read_only? }
+
+    context 'when the attribute was created with option `read_only: true`' do
+      let(:options) { Hash immutable: true }
+
+      it 'returns `true`' do
+        expect(result).to be true
+      end
+    end
+
+    context 'when the attribute was not created with option `read_only: true`' do
+      it 'returns `false`' do
+        expect(result).to be false
+      end
+    end
+  end
+
   describe '#has_collection_class?' do
     let(:result) { subject.has_collection_class? }
 

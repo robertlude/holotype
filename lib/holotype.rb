@@ -1,5 +1,7 @@
 %i[
   attribute
+  attributes_already_defined_error
+  inheritance_disallowed_error
   missing_required_attributes_error
   version
 ].each { |name| require_relative "holotype/#{name}.rb" }
@@ -12,8 +14,17 @@ class Holotype
       # symbolize name
       name = name.to_sym
 
+      # prepare options
+      processed_options = if immutable?
+                            options.merge immutable: true
+                          else
+                            options
+                          end
+
       # create attribute definition
-      attribute = Attribute::Definition.new name, options, &default
+      attribute = Attribute::Definition.new name,
+                                            **processed_options,
+                                            &default
 
       # store the attribute definition
       attributes[name] = attribute
@@ -25,12 +36,26 @@ class Holotype
 
       # create an attribute writer
       define_method "#{name}=" do |value|
-        self.attributes[name].value
+        self.attributes[name].value = value
       end
     end
 
     def attributes
       @attributes ||= Hash[]
+    end
+
+    def make_immutable
+      raise AttributesAlreadyDefinedError.new if attributes.count != 0
+
+      define_singleton_method :inherited do |_|
+        raise InheritanceDisallowedError.new
+      end
+
+      @immutable = true
+    end
+
+    def immutable?
+      !!@immutable
     end
   end
 

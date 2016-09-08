@@ -8,8 +8,10 @@ class Holotype
       def initialize name, **options, &default_block
         @collection       = options.fetch :collection, false
         @collection_class = options[:collection_class]
+        @immutable        = options.fetch :immutable, false
         @klass            = options[:class]
         @name             = name
+        @read_only        = options.fetch :read_only, false
         @required         = options.fetch :required, false
 
         if default_block
@@ -52,6 +54,14 @@ class Holotype
 
       def has_collection_class?
         !!@collection_class
+      end
+
+      def read_only?
+        !!@read_only
+      end
+
+      def immutable?
+        !!@immutable
       end
 
       private

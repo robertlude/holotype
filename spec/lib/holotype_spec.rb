@@ -21,12 +21,18 @@ describe Holotype do
   end
 
   def mock_attribute_objects
+    other_options = if make_immutable
+                      Hash immutable: true
+                    else
+                      Hash[]
+                    end
+
     ATTRIBUTE_IDS.each do |id|
       expect(described_class::Attribute::Definition)
         .to receive(:new)
         .with(
           attribute_names[id],
-          **attribute_options[id],
+          **(attribute_options[id].merge other_options),
           &attribute_blocks[id]
         )
         .and_return attribute_object_doubles[id]
@@ -40,6 +46,7 @@ describe Holotype do
   let(:attribute_names)       { junk_map_attributes 'name' }
   let(:attribute_options)     { map_attributes { |_| Hash[] } }
   let(:given_attributes)      { junk_map_attributes 'given_value' }
+  let(:make_immutable)        { false }
   let(:normalized_attributes) { junk_map_attributes 'normalized_value' }
   let(:test_instance)         { test_class.new **instance_attributes }
 
@@ -47,9 +54,10 @@ describe Holotype do
     map_attributes do |id|
       is_required = attribute_options[id].fetch(:required, false)
 
-      double default:   attribute_defaults[id],
-             normalize: normalized_attributes[id],
-             required?: is_required
+      double default:    attribute_defaults[id],
+             immutable?: make_immutable,
+             normalize:  normalized_attributes[id],
+             required?:  is_required
     end
   end
 
@@ -70,6 +78,8 @@ describe Holotype do
 
   let :test_class do
     Class.new(described_class).tap do |klass|
+      klass.send :make_immutable if make_immutable
+
       ATTRIBUTE_IDS.each do |id|
         klass.send :attribute,
                    attribute_names[id],
@@ -143,6 +153,53 @@ describe Holotype do
               .with(test_instance)
           end
         end
+      end
+    end
+  end
+
+  describe '.make_immutable' do
+    let(:make_immutable) { true }
+
+    it 'disallows subclassing' do
+      expect { Class.new test_class }
+        .to raise_error described_class::InheritanceDisallowedError
+    end
+
+    it 'prevents changing values' do
+      ATTRIBUTE_IDS.each do |id|
+        expect { test_instance.public_send "#{attribute_names[id]}=", junk }
+          .to raise_error described_class::Attribute::ImmutableValueError
+      end
+    end
+
+    context 'when attributes have already been defined' do
+      let(:make_immutable) { false }
+
+      let :test_class do
+        super().tap { |test_class| test_class.make_immutable }
+      end
+
+      it 'raises an error' do
+        expect { test_class }
+          .to raise_error described_class::AttributesAlreadyDefinedError
+      end
+    end
+  end
+
+  describe '.immutable?' do
+    let(:result) { test_class.immutable? }
+
+    context 'when the class is immutable' do
+      let(:make_immutable) { true }
+
+      it 'returns `true`' do
+        expect(result).to be true
+      end
+    end
+
+    context 'when the class is not immutable' do
+      it 'returns `false`' do
+        expect(result).to be false
       end
     end
   end
