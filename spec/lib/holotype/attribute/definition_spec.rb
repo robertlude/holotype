@@ -245,6 +245,24 @@ describe Holotype::Attribute::Definition do
         it 'returns an instance of the given collection class' do
           expect(result.class).to be collection_class
         end
+
+        context 'when the collection class is `Hash`-like' do
+          let(:collection_class) { Hash }
+          let(:key_a)            { "key_a_#{junk}".to_sym }
+          let(:key_b)            { "key_b_#{junk}".to_sym }
+          let(:keys)             { [ key_a, key_b ] }
+
+          let :value do
+            Hash[
+              key_a => value_a,
+              key_b => value_b,
+            ]
+          end
+
+          it 'preserves the given keys' do
+            expect(result.keys).to eq keys
+          end
+        end
       end
 
       context 'when the attribute was created without option `collection_class`' do

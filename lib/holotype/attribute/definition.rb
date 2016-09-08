@@ -75,6 +75,14 @@ class Holotype
       end
 
       def normalize_collection values
+        if has_collection_class? && @collection_class.ancestors.include?(Hash)
+          normalize_hash_like_collection values
+        else
+          normalize_array_like_collection values
+        end
+      end
+
+      def normalize_array_like_collection values
         normalized_values = values.map { |value| normalize_single value }
 
         if has_collection_class?
@@ -82,6 +90,14 @@ class Holotype
         else
           normalized_values
         end.freeze
+      end
+
+      def normalize_hash_like_collection values
+        normalized_values = values.map do |key, value|
+                              [key, normalize_single(value)]
+                            end
+
+        @collection_class[normalized_values].freeze
       end
 
       def symbolize_keys hash
