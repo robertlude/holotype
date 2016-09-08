@@ -73,6 +73,60 @@ describe Holotype::Attribute::Definition do
     end
   end
 
+  describe '#has_class?' do
+    let(:result) { subject.has_class? }
+
+    context 'when the attribute was created with option `class`' do
+      let(:options) { Hash class: junk }
+
+      it 'returns `true`' do
+        expect(result).to be true
+      end
+    end
+
+    context 'when the attribute was not created with option `class`' do
+      it 'returns `false`' do
+        expect(result).to be false
+      end
+    end
+  end
+
+  describe '#collection?' do
+    let(:result) { subject.collection? }
+
+    context 'when the attribute was created with option `collection: true`' do
+      let(:options) { Hash collection: true }
+
+      it 'returns `true`' do
+        expect(result).to be true
+      end
+    end
+
+    context 'when the attribute was not created with option `collection: true`' do
+      it 'returns `false`' do
+        expect(result).to be false
+      end
+    end
+  end
+
+  describe '#has_collection_class?' do
+    let(:result) { subject.has_collection_class? }
+
+    context 'when the attribute was created with option `collection_class`' do
+      let(:options) { Hash collection_class: junk }
+
+      it 'returns `true`' do
+        expect(result).to be true
+      end
+    end
+
+    context 'when the attribute was not created with option `collection_class`' do
+      it 'returns `false`' do
+        expect(result).to be false
+      end
+    end
+  end
+
   describe '#default' do
     let(:receiver) { double x: 2 }
     let(:result)   { subject.default receiver }
@@ -132,6 +186,49 @@ describe Holotype::Attribute::Definition do
       it 'returns the frozen given value' do
         expect(result).to be_frozen
         expect(result).to eq value
+      end
+    end
+
+    context 'when the attribute was created with option `collection: true`' do
+      let(:options) { Hash collection: true }
+      let(:value)   { [ value_a, value_b ] }
+      let(:value_a) { Hash a: 1 }
+      let(:value_b) { Hash a: 2 }
+
+      it 'returns a collection of frozen objects' do
+        expect(result).to all be_frozen
+      end
+
+      context 'when the attribute was created with option `collection_class`' do
+        let(:collection_class) { Set }
+
+        let :options do
+          super().merge collection_class: collection_class
+        end
+
+        it 'returns an instance of the given collection class' do
+          expect(result.class).to be collection_class
+        end
+      end
+
+      context 'when the attribute was created without option `collection_class`' do
+        it 'returns an instance of `Array`' do
+          expect(result.class).to be Array
+        end
+      end
+
+      context 'when the attribute was created with option `class`' do
+        let(:options) { super().merge class: attribute_class }
+
+        it 'returns a collection of objects of the given class' do
+          expect(result.map &:class).to all be attribute_class
+        end
+      end
+
+      context 'when the attribute was created without option `class`' do
+        it 'returns a collection of the original values' do
+          expect(result).to eq [ value_a, value_b ]
+        end
       end
     end
   end

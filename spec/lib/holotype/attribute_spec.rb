@@ -17,15 +17,22 @@ describe Holotype::Attribute do
     normalized_value
   ]
 
-  let(:attribute_read_only) { false }
-  let(:create_with_value)   { true }
-  let(:owner)               { double }
+  let(:attribute_collection)       { false }
+  let(:attribute_read_only)        { false }
+  let(:create_with_value)          { true }
+  let(:owner)                      { double }
 
   let :definition do
-    double(
+    properties = Hash[
+      collection: attribute_collection,
       name:       attribute_name,
       read_only?: attribute_read_only,
-    )
+    ].tap do |properties|
+      properties[:collection_class] = attribute_collection_class \
+        if defined? attribute_collection_class
+    end
+
+    double **properties
   end
 
   # Wrappers

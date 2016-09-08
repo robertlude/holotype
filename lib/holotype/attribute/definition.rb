@@ -6,9 +6,11 @@ class Holotype
       attr_reader :name
 
       def initialize name, **options, &default_block
-        @klass    = options[:class]
-        @name     = name
-        @required = options.fetch :required, false
+        @collection       = options.fetch :collection, false
+        @collection_class = options[:collection_class]
+        @klass            = options[:class]
+        @name             = name
+        @required         = options.fetch :required, false
 
         if default_block
           raise DefaultConflictError.new if options.key? :default
@@ -29,11 +31,11 @@ class Holotype
       end
 
       def normalize value
-        if @klass
-          @klass.new **(symbolize_keys value)
+        if collection?
+          normalize_collection value
         else
-          value
-        end.freeze
+          normalize_single value
+        end
       end
 
       def required?
@@ -44,7 +46,33 @@ class Holotype
         !!@klass
       end
 
+      def collection?
+        !!@collection
+      end
+
+      def has_collection_class?
+        !!@collection_class
+      end
+
       private
+
+      def normalize_single value
+        if has_class?
+          @klass.new **(symbolize_keys value)
+        else
+          value
+        end.freeze
+      end
+
+      def normalize_collection values
+        normalized_values = values.map { |value| normalize_single value }
+
+        if has_collection_class?
+          @collection_class.new normalized_values
+        else
+          normalized_values
+        end.freeze
+      end
 
       def symbolize_keys hash
         Hash[hash.map { |key, value| [key.to_sym, value] }]

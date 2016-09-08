@@ -12,7 +12,7 @@ class Holotype
       # symbolize name
       name = name.to_sym
 
-      # create attribute defintion
+      # create attribute definition
       attribute = Attribute::Definition.new name, options, &default
 
       # store the attribute definition
@@ -20,11 +20,12 @@ class Holotype
 
       # create an attribute reader
       define_method name do
-        # return the value if there is one
-        next __attribute_get name if __attribute_has_value?[name]
+        self.attributes[name].value
+      end
 
-        # use the default value
-        __attribute_set name, attribute.default(self)
+      # create an attribute writer
+      define_method "#{name}=" do |value|
+        self.attributes[name].value
       end
     end
 
@@ -34,6 +35,8 @@ class Holotype
   end
 
   # Instance Definition
+
+  attr_reader :attributes
 
   def initialize **attributes
     __check_for_missing_required attributes
@@ -46,28 +49,27 @@ class Holotype
 
   def to_hash
     Hash[
-      self.class.attributes.map do |name, attribute|
-        key   = name
-        value = public_send name
+      attributes
+        .map do |key, attribute|
+          definition = attribute.definition
 
-        value = value.to_hash if attribute.has_class?
+          value = if definition.has_class? || definition.has_collection_class?
+                    attribute.value.to_hash
+                  else
+                    attribute.value
+                  end
 
-        [key, value]
-      end
+          [key, value]
+        end
     ]
   end
 
   def == other
     return false unless self.class == other.class
 
-    self.class.attributes.each do |name, _|
-      self_value  = self.public_send name
-      other_value = other.public_send name
-
-      return false unless self_value == other_value
+    attributes.all? do |name, attribute|
+      attribute.value == other.attributes[name].value
     end
-
-    true
   end
 
   def with **attributes
@@ -93,33 +95,21 @@ class Holotype
   end
 
   def __store attributes
-    self
-      .class
-      .attributes
-      .each do |name, _|
-        next unless attributes.key? name
-        __attribute_set name, attributes[name].freeze
-      end
-  end
+    @attributes = Hash[
+                    self
+                      .class
+                      .attributes
+                      .map do |name, definition|
+                        options = if attributes.key? name
+                                    Hash value: attributes[name]
+                                  else
+                                    Hash[]
+                                  end
 
-  def __attribute_get name
-    if __attribute_has_value?[name]
-      instance_variable_get "@#{name}"
-    else
-      __attribute_set name, self.class.attributes[name].default(self)
-    end
-  end
+                        attribute = Attribute.new self, definition, **options
 
-  def __attribute_set name, value
-    normalized_value = self.class.attributes[name].normalize value
-
-    instance_variable_set "@#{name}", normalized_value
-    __attribute_has_value?[name] = true
-
-    normalized_value
-  end
-
-  def __attribute_has_value?
-    @__attribute_has_value ||= Hash.new { |_| false }
+                        [name, attribute]
+                      end
+                  ].freeze
   end
 end
