@@ -12,9 +12,32 @@ describe Holotype::MissingRequiredAttributesError do
   let(:missing_attributes)  { [ attribute_a, attribute_b ] }
   let(:required_attributes) { [ attribute_a, attribute_b, attribute_c ] }
 
+  let :attribute_a_double do
+    double name:      attribute_a,
+           required?: true
+  end
+
+  let :attribute_b_double do
+    double name:      attribute_b,
+           required?: true
+  end
+
+  let :attribute_c_double do
+    double name:      attribute_c,
+           required?: true
+  end
+
+  let :attribute_doubles do
+    Hash[
+      attribute_a => attribute_a_double,
+      attribute_b => attribute_b_double,
+      attribute_c => attribute_c_double,
+    ]
+  end
+
   let :original_class do
-    double __required_attributes: required_attributes,
-           name:                  fake_class_name
+    double attributes: attribute_doubles,
+           name:       fake_class_name
   end
 
   # Instance Method Tests

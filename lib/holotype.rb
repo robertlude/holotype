@@ -127,9 +127,12 @@ class Holotype
       .class
       .attributes
       .flat_map do |name, attribute|
-        # select missing required attribute names
+        # skip non-required attributes
         next [] unless attribute.required?
+
+        # skip attributes with provided values
         next [] if attributes.key? name
+
         [name]
       end
       .tap do |missing_attributes|

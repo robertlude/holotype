@@ -9,13 +9,21 @@ class Holotype
 
     def message
       "Class `#{original_class.name}` requires the following attributes:" \
-      "#{format_list original_class.__required_attributes}"               \
+      "#{format_list required_attributes}"                                \
       "\n\n"                                                              \
       "Missing attributes:"                                               \
       "#{format_list attributes}"
     end
 
     private
+
+    def required_attributes
+      original_class
+        .attributes
+        .values
+        .select(&:required?)
+        .map(&:name)
+    end
 
     def format_list attributes
       attributes
