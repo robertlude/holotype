@@ -1,3 +1,9 @@
+%w[
+  default_conflict_error
+  no_collection_class_error
+  no_value_class_error
+].each { |file| require_relative "definition/#{file}" }
+
 require_relative 'definition/default_conflict_error.rb'
 
 class Holotype
@@ -5,14 +11,28 @@ class Holotype
     class Definition
       attr_reader :name
 
+      # TODO add attribute option disallow_nil
+
       def initialize name, **options, &default_block
         @collection       = options.fetch :collection, false
-        @collection_class = options[:collection_class]
         @immutable        = options.fetch :immutable, false
-        @klass            = options[:class]
         @name             = name
         @read_only        = options.fetch :read_only, false
         @required         = options.fetch :required, false
+
+        if options.key? :collection_class
+          @has_collection_class = true
+          @collection_class     = options[:collection_class]
+        else
+          @has_collection_class = false
+        end
+
+        if options.key? :value_class
+          @has_value_class = true
+          @value_class     = options[:value_class]
+        else
+          @has_value_class = false
+        end
 
         if default_block
           raise DefaultConflictError.new if options.key? :default
@@ -44,8 +64,13 @@ class Holotype
         !!@required
       end
 
-      def has_class?
-        !!@klass
+      def has_value_class?
+        @has_value_class
+      end
+
+      def value_class
+        raise NoValueClassError.new self unless has_value_class?
+        @value_class
       end
 
       def collection?
@@ -53,7 +78,12 @@ class Holotype
       end
 
       def has_collection_class?
-        !!@collection_class
+        @has_collection_class
+      end
+
+      def collection_class
+        raise NoCollectionClassError.new self unless has_collection_class?
+        @collection_class
       end
 
       def read_only?
@@ -67,11 +97,7 @@ class Holotype
       private
 
       def normalize_single value
-        if has_class? && !value.nil? # TODO test value.nil? cases
-          @klass.new **(symbolize_keys value)
-        else
-          value
-        end.freeze
+        ValueNormalizer.new(self).normalize value
       end
 
       def normalize_collection values
@@ -90,7 +116,7 @@ class Holotype
           @collection_class.new normalized_values
         else
           normalized_values
-        end.freeze
+        end
       end
 
       def normalize_hash_like_collection values
@@ -98,7 +124,7 @@ class Holotype
                               [key, normalize_single(value)]
                             end
 
-        @collection_class[normalized_values].freeze
+        @collection_class[normalized_values]
       end
 
       def symbolize_keys hash

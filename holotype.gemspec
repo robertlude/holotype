@@ -11,7 +11,7 @@ Gem::Specification.new do |gem_specification|
     license:               'MIT',
     name:                  'holotype',
     required_ruby_version: '~> 2.0',
-    summary:               'DSL for immutable models',
+    summary:               'DSL for quick model definitions',
     version:               Holotype::VERSION,
   ]
 
@@ -23,6 +23,7 @@ Gem::Specification.new do |gem_specification|
   dependencies = Hash[
     development: Hash[
       byebug:             nil,
+      memorandum:         '~> 2.1.2',
       rspec:              '~> 3.0',
       :'rspec-junklet' => '~> 2.0',
     ],

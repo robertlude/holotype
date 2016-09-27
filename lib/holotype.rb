@@ -1,8 +1,14 @@
+%w[
+  memorandum
+].each { |gem| require gem }
+
 %i[
   attribute
   attributes_already_defined_error
+  collection_normalizer
   inheritance_disallowed_error
   missing_required_attributes_error
+  value_normalizer
   version
 ].each { |name| require_relative "holotype/#{name}.rb" }
 

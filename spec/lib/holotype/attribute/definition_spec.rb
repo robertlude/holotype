@@ -13,7 +13,31 @@ describe Holotype::Attribute::Definition do
 
   let(:default_block) { }
   let(:name)          { "name_#{junk}".to_sym }
-  let(:options)       { Hash[] }
+
+  let :options do
+    Hash[].tap do |options|
+      options[:collection] = option_collection \
+        if defined? option_collection
+
+      options[:collection_class] = option_collection_class \
+        if defined? option_collection_class
+
+      options[:default] = option_default \
+        if defined? option_default
+
+      options[:immutable] = option_immutable \
+        if defined? option_immutable
+
+      options[:read_only] = option_read_only \
+        if defined? option_read_only
+
+      options[:required] = option_required \
+        if defined? option_required
+
+      options[:value_class] = option_value_class \
+        if defined? option_value_class
+    end
+  end
 
   let :default_conflict_error do
     described_class::DefaultConflictError
@@ -27,25 +51,22 @@ describe Holotype::Attribute::Definition do
     end
 
     context 'given no option `required`' do
-      let(:options) { super().delete_if { |key, _| key == :required } }
-
       it 'provides `false` as a default' do
         expect(subject.required?).to be false
       end
     end
 
     context 'given option `required`' do
-      let(:options)  { super().merge required: required }
-      let(:required) { true }
+      let(:option_required) { true }
 
       it 'stores the value' do
-        expect(subject.required?).to be required
+        expect(subject.required?).to be option_required
       end
     end
 
     context 'given option `default` and a block' do
-      let(:default_block) { -> { } }
-      let(:options)       { Hash default: junk }
+      let(:default_block)  { -> { } }
+      let(:option_default) { junk }
 
       it 'raises an error' do
         expect { subject }.to raise_error default_conflict_error
@@ -59,7 +80,7 @@ describe Holotype::Attribute::Definition do
     let(:result) { subject.required? }
 
     context 'when the attribute was created with option `required: true`' do
-      let(:options) { Hash required: true }
+      let(:option_required) { true }
 
       it 'returns `true`' do
         expect(result).to be true
@@ -73,20 +94,41 @@ describe Holotype::Attribute::Definition do
     end
   end
 
-  describe '#has_class?' do
-    let(:result) { subject.has_class? }
+  describe '#has_value_class?' do
+    let(:result) { subject.has_value_class? }
 
-    context 'when the attribute was created with option `class`' do
-      let(:options) { Hash class: junk }
+    context 'when the attribute was created with option `value_class`' do
+      junklet :option_value_class
 
       it 'returns `true`' do
         expect(result).to be true
       end
     end
 
-    context 'when the attribute was not created with option `class`' do
+    context 'when the attribute was not created with option `value_class`' do
       it 'returns `false`' do
         expect(result).to be false
+      end
+    end
+  end
+
+  describe '#value_class' do
+    let(:result) { subject.value_class }
+
+    context 'when the attribute was created with option `value_class`' do
+      junklet :option_value_class
+
+      it 'returns the given value_class' do
+        expect(result).to be option_value_class
+      end
+    end
+
+    context 'when the attribute was not created with option `value_class`' do
+      it 'raises an appropriate error' do
+        expect { result }.to raise_error do |error|
+          expect(error).to be_a described_class::NoValueClassError
+          expect(error.definition).to be subject
+        end
       end
     end
   end
@@ -95,7 +137,7 @@ describe Holotype::Attribute::Definition do
     let(:result) { subject.collection? }
 
     context 'when the attribute was created with option `collection: true`' do
-      let(:options) { Hash collection: true }
+      let(:option_collection) { true }
 
       it 'returns `true`' do
         expect(result).to be true
@@ -113,7 +155,7 @@ describe Holotype::Attribute::Definition do
     let(:result) { subject.immutable? }
 
     context 'when the attribute was created with option `immutable: true`' do
-      let(:options) { Hash immutable: true }
+      let(:option_immutable) { true }
 
       it 'returns `true`' do
         expect(result).to be true
@@ -131,7 +173,7 @@ describe Holotype::Attribute::Definition do
     let(:result) { subject.read_only? }
 
     context 'when the attribute was created with option `read_only: true`' do
-      let(:options) { Hash read_only: true }
+      let(:option_read_only) { true }
 
       it 'returns `true`' do
         expect(result).to be true
@@ -149,7 +191,7 @@ describe Holotype::Attribute::Definition do
     let(:result) { subject.has_collection_class? }
 
     context 'when the attribute was created with option `collection_class`' do
-      let(:options) { Hash collection_class: junk }
+      let(:option_collection_class) { junk }
 
       it 'returns `true`' do
         expect(result).to be true
@@ -159,6 +201,27 @@ describe Holotype::Attribute::Definition do
     context 'when the attribute was not created with option `collection_class`' do
       it 'returns `false`' do
         expect(result).to be false
+      end
+    end
+  end
+
+  describe '#collection_class' do
+    let(:result) { subject.collection_class }
+
+    context 'when the instance was created with option `collection_class`' do
+      junklet(:option_collection_class) { double }
+
+      it 'returns the given `collection_class`' do
+        expect(result).to be option_collection_class
+      end
+    end
+
+    context 'when the instance was not created with option `collection_class`' do
+      it 'raises an appropriate error' do
+        expect { result }.to raise_error do |error|
+          expect(error).to be_a described_class::NoCollectionClassError
+          expect(error.definition).to be subject
+        end
       end
     end
   end
@@ -185,12 +248,10 @@ describe Holotype::Attribute::Definition do
     end
 
     context 'when the attribute was created with option `default`' do
-      junklet :default
-
-      let(:options) { Hash default: default }
+      junklet :option_default
 
       it 'returns the specified default value' do
-        expect(result).to eq default
+        expect(result).to eq option_default
       end
     end
 
@@ -205,20 +266,20 @@ describe Holotype::Attribute::Definition do
     let(:result) { subject.normalize value }
     let(:value)  { Hash a: 1 }
 
-    let :attribute_class do
+    let :test_value_class do
       Class.new(Holotype) { attribute :a }
     end
 
-    context 'when the attribute was created with option `class`' do
-      let(:options) { Hash class: attribute_class }
+    context 'when the attribute was created with option `value_class`' do
+      let(:option_value_class) { test_value_class }
 
       it 'converts the value into an instance of that class' do
-        expect(result).to be_a attribute_class
+        expect(result).to be_an option_value_class
         expect(result.a).to be 1
       end
     end
 
-    context 'when the attribute was created without without option `class`' do
+    context 'when the attribute was created without without option `value_class`' do
       it 'returns the frozen given value' do
         expect(result).to be_frozen
         expect(result).to eq value
@@ -226,31 +287,27 @@ describe Holotype::Attribute::Definition do
     end
 
     context 'when the attribute was created with option `collection: true`' do
-      let(:options) { Hash collection: true }
-      let(:value)   { [ value_a, value_b ] }
-      let(:value_a) { Hash a: 1 }
-      let(:value_b) { Hash a: 2 }
+      let(:option_collection) { true }
+      let(:value)             { [ value_a, value_b ] }
+      let(:value_a)           { Hash a: 1 }
+      let(:value_b)           { Hash a: 2 }
 
       it 'returns a collection of frozen objects' do
         expect(result).to all be_frozen
       end
 
       context 'when the attribute was created with option `collection_class`' do
-        let(:collection_class) { Set }
-
-        let :options do
-          super().merge collection_class: collection_class
-        end
+        let(:option_collection_class) { Set }
 
         it 'returns an instance of the given collection class' do
-          expect(result.class).to be collection_class
+          expect(result.class).to be option_collection_class
         end
 
         context 'when the collection class is `Hash`-like' do
-          let(:collection_class) { Hash }
-          let(:key_a)            { "key_a_#{junk}".to_sym }
-          let(:key_b)            { "key_b_#{junk}".to_sym }
-          let(:keys)             { [ key_a, key_b ] }
+          let(:key_a)                   { "key_a_#{junk}".to_sym }
+          let(:key_b)                   { "key_b_#{junk}".to_sym }
+          let(:keys)                    { [ key_a, key_b ] }
+          let(:option_collection_class) { Hash }
 
           let :value do
             Hash[
@@ -271,15 +328,15 @@ describe Holotype::Attribute::Definition do
         end
       end
 
-      context 'when the attribute was created with option `class`' do
-        let(:options) { super().merge class: attribute_class }
+      context 'when the attribute was created with option `value_class`' do
+        let(:option_value_class) { test_value_class }
 
         it 'returns a collection of objects of the given class' do
-          expect(result.map &:class).to all be attribute_class
+          expect(result.map &:class).to all be test_value_class
         end
       end
 
-      context 'when the attribute was created without option `class`' do
+      context 'when the attribute was created without option `value_class`' do
         it 'returns a collection of the original values' do
           expect(result).to eq [ value_a, value_b ]
         end
