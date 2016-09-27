@@ -10,19 +10,8 @@ class Holotype
 
     def normalize collection
       # TODO test mismatches of collection/collection_class hash_like/array_like
-      normalized_collection = if collection.kind_of? Hash
-                                normalized_hash collection
-                              else
-                                normalized_array collection
-                              end
 
-      if has_collection_class?
-        if collection_class.kind_of? Hash
-          collection_class.new **normalized_collection
-        else
-          collection_class.new *normalized_collection
-        end
-      end
+      result = classify normalized collection
 
       if definition.immutable?
         result.freeze
@@ -48,19 +37,25 @@ class Holotype
     end
 
     def hash_like collection
-      if definition.has_collection_class?
-        definition.collection_class.new **collection
-      else
-        collection
-      end
+      return collection unless definition.has_collection_class?
+
+      definition
+        .collection_class
+        .new
+        .tap do |result|
+          collection.each { |key, value| result[key] = value }
+        end
     end
 
     def array_like collection
-      if definition.has_collection_class?
-        definition.collection_class.new *collection
-      else
-        collection
-      end
+      return collection unless definition.has_collection_class?
+
+      definition
+        .collection_class
+        .new
+        .tap do |result|
+          collection.each { |value, index| result << value }
+        end
     end
 
     def classify collection

@@ -8,7 +8,11 @@ class Holotype
 
     def normalize value
       result = if definition.has_value_class?
-                 definition.value_class.new value
+                 if value.nil? # TODO add test for this
+                   nil
+                 else
+                   definition.value_class.new value
+                 end
                else
                  value
                end
