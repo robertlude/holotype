@@ -31,7 +31,8 @@ describe Holotype::Attribute do
   ]
 
   let(:create_with_value) { false }
-  let(:owner)             { double }
+  let(:owner)             { double frozen?: owner_frozen }
+  let(:owner_frozen)      { false }
 
   # Wrappers
 
@@ -84,12 +85,49 @@ describe Holotype::Attribute do
   describe '#value=' do
     let(:result) { subject.value = given_value }
 
-    it 'normalizes and stores the value' do
-      expect_normalize
+    context 'when the attribute is immutable' do
+      let(:definition_immutable) { true }
 
-      result
+      it 'raises an error' do
+        expect { result }.to raise_error described_class::ImmutableValueError
+      end
+    end
 
-      expect(subject.value).to eq normalized_value
+    context 'when the attribute is not immutable' do
+      let(:definition_immutable) { false }
+
+      context 'when the owner is frozen' do
+        let(:owner_frozen) { true }
+
+        it 'raises an error' do
+          expect { result }
+            .to raise_error described_class::FrozenModificationError
+        end
+      end
+
+      context 'when the owner is not frozen' do
+        let(:owner_frozen) { false }
+
+        context 'when the attribute is read only' do
+          let(:definition_read_only) { true }
+
+          it 'raises an error' do
+            expect { result }.to raise_error described_class::ReadOnlyError
+          end
+        end
+
+        context 'when the attribute is not read only' do
+          let(:definition_read_only) { false }
+
+          it 'normalizes and stores the value' do
+            expect_normalize
+
+            result
+
+            expect(subject.value).to eq normalized_value
+          end
+        end
+      end
     end
   end
 end

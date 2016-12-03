@@ -22,5 +22,9 @@ describe Holotype::CollectionNormalizer::ExpectedHashLikeCollectionError do
       expect(result).to eq "Attribute `#{attribute}` expected Hash-like " \
                            "collection, received Array-like collection"
     end
+
+    it 'returns a frozen value' do
+      expect(result).to be_frozen
+    end
   end
 end

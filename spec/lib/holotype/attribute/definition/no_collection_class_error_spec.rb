@@ -34,5 +34,9 @@ describe Holotype::Attribute::Definition::NoCollectionClassError do
       expect(result).to eq "No collection class for attribute definition: " \
                            "#{attribute_definition.name}"
     end
+
+    it 'returns a frozen value' do
+      expect(result).to be_frozen
+    end
   end
 end

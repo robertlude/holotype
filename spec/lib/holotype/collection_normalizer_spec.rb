@@ -22,16 +22,12 @@ describe Holotype::CollectionNormalizer do
     let(:collection)            { [ value_a, value_b ] }
     let(:normalized_collection) { [ normalized_value_a, normalized_value_b ] }
     let(:result)                { subject.normalize collection }
-
-    it 'returns a collection of normalized values' do
-      expect(result).to eq normalized_collection
-    end
+    let(:definition_collection) { true }
 
     context 'when the definition specifies immutability' do
       let(:definition_immutable) { true }
 
       it 'freezes the result' do
-        skip 'update this to test for deep freezing?'
         expect(result).to be_frozen
       end
     end
@@ -64,16 +60,28 @@ describe Holotype::CollectionNormalizer do
       context 'when the collection class is Hash-like' do
         junklet :key_a, :key_b
 
-        let :collection do
-          Hash[
-            key_a => value_a,
-            key_b => value_b,
-          ]
-        end
-
         let(:definition_collection_class) { Class.new Hash }
 
+        context 'when given no data' do
+          let(:collection) { }
+
+          it 'returns an instance of the collection class' do
+            expect(result).to be_a definition_collection_class
+          end
+
+          it 'returns an empty collection' do
+            expect(result).to be_empty
+          end
+        end
+
         context 'when the given data is Hash-like' do
+          let :collection do
+            Hash[
+              key_a => value_a,
+              key_b => value_b,
+            ]
+          end
+
           it 'returns an instance of the collection class' do
             expect(result).to be_a definition_collection_class
           end

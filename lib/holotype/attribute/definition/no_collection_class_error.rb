@@ -10,6 +10,7 @@ class Holotype
 
         def message
           "No collection class for attribute definition: #{definition.name}"
+            .freeze
         end
       end
     end

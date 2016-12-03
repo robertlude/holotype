@@ -1,11 +1,11 @@
-describe Holotype::Attribute::ImmutableValueError do
+describe Holotype::Attribute::FrozenModificationError do
   # Subject
 
-  subject { described_class.new name }
+  subject { described_class.new attribute_name }
 
   # Lets
 
-  junklet :name
+  junklet :attribute_name
 
   # Class Tests
 
@@ -15,11 +15,11 @@ describe Holotype::Attribute::ImmutableValueError do
 
   # Instance Tests
 
-  describe '#name' do
-    let(:result) { subject.name }
+  describe '#attribute_name' do
+    let(:result) { subject.attribute_name }
 
-    it 'returns the name supplied during creation' do
-      expect(result).to eq name
+    it 'returns the initialized attribute name' do
+      expect(result).to eq attribute_name
     end
 
     it 'returns a frozen value' do
@@ -31,8 +31,8 @@ describe Holotype::Attribute::ImmutableValueError do
     let(:result) { subject.message }
 
     it 'returns a descriptive message' do
-      expect(result).to eq "Cannot modify value of `#{name}` in immutable " \
-                           "class"
+      expect(result).to eq "Cannot modify value of `#{attribute_name}` in " \
+                           "frozen object"
     end
 
     it 'returns a frozen value' do

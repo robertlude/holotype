@@ -9,7 +9,7 @@ class Holotype
 
       def message
         "Attribute `#{attribute}` expected Hash-like collection, received " \
-        "Array-like collection"
+        "Array-like collection".freeze
       end
     end
   end

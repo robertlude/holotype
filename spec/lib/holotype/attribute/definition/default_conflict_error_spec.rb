@@ -18,5 +18,9 @@ describe Holotype::Attribute::Definition::DefaultConflictError do
       expect(result).to eq 'Attribute definitions cannot have both a default ' \
                            'value and a default block'
     end
+
+    it 'returns a frozen value' do
+      expect(result).to be_frozen
+    end
   end
 end

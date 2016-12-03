@@ -1,11 +1,7 @@
-describe Holotype::CollectionNormalizer::ExpectedArrayLikeCollectionError do
+describe Holotype::Attribute::Definition::RequiredConflictError do
   # Subject
 
-  subject { described_class.new attribute }
-
-  # Lets
-
-  junklet :attribute
+  subject { described_class.new }
 
   # Class Tests
 
@@ -19,8 +15,8 @@ describe Holotype::CollectionNormalizer::ExpectedArrayLikeCollectionError do
     let(:result) { subject.message }
 
     it 'returns a descriptive error message' do
-      expect(result).to eq "Attribute `#{attribute}` expected Array-like " \
-                           "collection, received Hash-like collection"
+      expect(result).to eq 'Attribute definitions cannot both be required ' \
+                           'and provide a default'
     end
 
     it 'returns a frozen value' do

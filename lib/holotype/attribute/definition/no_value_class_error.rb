@@ -9,7 +9,7 @@ class Holotype
         end
 
         def message
-          "No value class for attribute definition: #{definition.name}"
+          "No value class for attribute definition: #{definition.name}".freeze
         end
       end
     end
