@@ -1,3 +1,8 @@
+%w[
+  expected_array_like_collection_error
+  expected_hash_like_collection_error
+].each { |file| require_relative "collection_normalizer/#{file}" }
+
 class Holotype
   class CollectionNormalizer
     extend Memorandum
@@ -9,7 +14,7 @@ class Holotype
     end
 
     def normalize collection
-      # TODO test mismatches of collection/collection_class hash_like/array_like
+      check_likeness_of collection
 
       result = classify normalized collection
 
@@ -22,16 +27,28 @@ class Holotype
 
     private
 
-    def value_normalizer
+    memo def value_normalizer
       ValueNormalizer.new definition
     end
-    memo :value_normalizer
+
+    def check_likeness_of collection
+      if hash_like?
+        raise ExpectedHashLikeCollectionError.new definition.name \
+          unless class_is_hash_like? collection.class
+      else
+        raise ExpectedArrayLikeCollectionError.new definition.name \
+          unless !class_is_hash_like? collection.class
+      end
+    end
 
     def hash_like?
       return false unless definition.has_collection_class?
 
-      definition
-        .collection_class
+      class_is_hash_like? definition.collection_class
+    end
+
+    def class_is_hash_like? klass
+      klass
         .ancestors
         .include? Hash
     end

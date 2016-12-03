@@ -11,7 +11,13 @@ describe Holotype::Attribute::Definition::NoValueClassError do
     double name: attribute_definition_name
   end
 
-  # Tests
+  # Class Tests
+
+  it 'is a StandardError' do
+    expect(described_class.ancestors).to include StandardError
+  end
+
+  # Instance Tests
 
   describe '#definition' do
     let(:result) { subject.definition }

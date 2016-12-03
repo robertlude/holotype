@@ -2,11 +2,7 @@ describe Holotype::Attribute::Definition do
   # Subject
 
   subject do
-    if default_block
-      described_class.new name, **options, &default_block
-    else
-      described_class.new name, **options
-    end
+    described_class.new name, **options, &default_block
   end
 
   # Lets
@@ -270,76 +266,41 @@ describe Holotype::Attribute::Definition do
       Class.new(Holotype) { attribute :a }
     end
 
-    context 'when the attribute was created with option `value_class`' do
-      let(:option_value_class) { test_value_class }
+    context 'when the attribute is not a collection' do
+      junklet :normalized_value
 
-      it 'converts the value into an instance of that class' do
-        expect(result).to be_an option_value_class
-        expect(result.a).to be 1
+      let :value_normalizer do
+        double normalize: normalized_value
+      end
+
+      before do
+        expect(Holotype::ValueNormalizer)
+          .to receive(:new)
+          .and_return value_normalizer
+      end
+
+      it 'normalizes the value with a ValueNormalizer' do
+        expect(result).to eq normalized_value
       end
     end
 
-    context 'when the attribute was created without without option `value_class`' do
-      it 'returns the frozen given value' do
-        expect(result).to be_frozen
-        expect(result).to eq value
-      end
-    end
+    context 'when the attribute is a collection' do
+      junklet :normalized_value
 
-    context 'when the attribute was created with option `collection: true`' do
       let(:option_collection) { true }
-      let(:value)             { [ value_a, value_b ] }
-      let(:value_a)           { Hash a: 1 }
-      let(:value_b)           { Hash a: 2 }
 
-      it 'returns a collection of frozen objects' do
-        expect(result).to all be_frozen
+      let :collection_normalizer do
+        double normalize: normalized_value
       end
 
-      context 'when the attribute was created with option `collection_class`' do
-        let(:option_collection_class) { Set }
-
-        it 'returns an instance of the given collection class' do
-          expect(result.class).to be option_collection_class
-        end
-
-        context 'when the collection class is `Hash`-like' do
-          let(:key_a)                   { "key_a_#{junk}".to_sym }
-          let(:key_b)                   { "key_b_#{junk}".to_sym }
-          let(:keys)                    { [ key_a, key_b ] }
-          let(:option_collection_class) { Hash }
-
-          let :value do
-            Hash[
-              key_a => value_a,
-              key_b => value_b,
-            ]
-          end
-
-          it 'preserves the given keys' do
-            expect(result.keys).to eq keys
-          end
-        end
+      before do
+        expect(Holotype::CollectionNormalizer)
+          .to receive(:new)
+          .and_return collection_normalizer
       end
 
-      context 'when the attribute was created without option `collection_class`' do
-        it 'returns an instance of `Array`' do
-          expect(result.class).to be Array
-        end
-      end
-
-      context 'when the attribute was created with option `value_class`' do
-        let(:option_value_class) { test_value_class }
-
-        it 'returns a collection of objects of the given class' do
-          expect(result.map &:class).to all be test_value_class
-        end
-      end
-
-      context 'when the attribute was created without option `value_class`' do
-        it 'returns a collection of the original values' do
-          expect(result).to eq [ value_a, value_b ]
-        end
+      it 'normalizes the value with a ValueNormalizer' do
+        expect(result).to eq normalized_value
       end
     end
   end

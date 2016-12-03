@@ -40,7 +40,13 @@ describe Holotype::MissingRequiredAttributesError do
            name:       fake_class_name
   end
 
-  # Instance Method Tests
+  # Class Tests
+
+  it 'is a StandardError' do
+    expect(described_class.ancestors).to include StandardError
+  end
+
+  # Instance Tests
 
   describe '#attributes' do
     let(:result) { subject.attributes }

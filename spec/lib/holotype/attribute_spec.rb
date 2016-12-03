@@ -9,141 +9,87 @@ describe Holotype::Attribute do
     end
   end
 
+  # Helpers
+
+  def expect_normalize
+    expect(definition)
+      .to receive(:normalize)
+      .once
+      .with(given_value)
+      .and_return(normalized_value)
+  end
+
+  # Setup
+
+  include_context 'fake definition'
+
   # Lets
 
   junklet *%i[
-    attribute_name
     given_value
     normalized_value
   ]
 
-  let(:attribute_collection) { false }
-  let(:attribute_read_only)  { false }
-  let(:attribute_immutable)  { false }
-  let(:create_with_value)    { true }
-  let(:owner)                { double }
-
-  let :definition do
-    properties = Hash[
-      collection: attribute_collection,
-      name:       attribute_name,
-      read_only?: attribute_read_only,
-      immutable?: attribute_immutable,
-    ].tap do |properties|
-      properties[:collection_class] = attribute_collection_class \
-        if defined? attribute_collection_class
-    end
-
-    double **properties
-  end
+  let(:create_with_value) { false }
+  let(:owner)             { double }
 
   # Wrappers
 
-  before do
-    if create_with_value
-      expect(definition)
-        .to receive(:normalize)
-        .once
-        .with(given_value)
-        .and_return(normalized_value)
+  before { expect_normalize if create_with_value }
+
+  # Class Tests
+
+  describe '.new' do
+    it 'stores the given owner' do
+      expect(subject.owner).to be owner
+    end
+
+    it 'stores the given definition' do
+      expect(subject.definition).to be definition
     end
   end
 
-  # Tests
+  # Instance Tests
 
   describe '#name' do
     let(:result) { subject.name }
 
-    it 'returns the name according to the definition' do
-      expect(result).to eq attribute_name
+    it 'returns the definition name' do
+      expect(result).to be definition_name
     end
   end
 
   describe '#value' do
     let(:result) { subject.value }
 
-    context 'when there is a stored value' do
-      it 'returns the stored value' do
-        expect(result).to eq normalized_value
+    context 'when created with a value' do
+      let(:create_with_value) { true }
+
+      it 'returns the given value' do
+        expect(result).to be normalized_value
       end
     end
 
-    context 'when there is no stored value' do
-      junklet *%i[
-        default_value
-        normalized_default_value
-      ]
+    context 'when created without a value' do
+      junklet :definition_default
 
       let(:create_with_value) { false }
 
-      before do
-        expect(definition)
-          .to receive(:default)
-          .once
-          .with(owner)
-          .and_return(default_value)
-
-        expect(definition)
-          .to receive(:normalize)
-          .once
-          .with(default_value)
-          .and_return(normalized_default_value)
-      end
-
-      it 'returns the default according to the definition' do
-        expect(result).to eq normalized_default_value
-      end
-
-      it 'stores the default value on the first call' do
-        subject.value
-        subject.value
+      it 'returns the default value from the definition' do
+        expect(result).to be definition_default
       end
     end
   end
 
   describe '#value=' do
-    junklet *%i[
-      new_normalized_value
-      new_value
-    ]
+    let(:result) { subject.value = given_value }
 
-    let(:result) { subject.public_send :value=, new_value }
+    it 'normalizes and stores the value' do
+      expect_normalize
 
-    context 'when the attribute is not read only' do
-      before do
-        expect(definition)
-          .to receive(:normalize)
-          .once
-          .with(new_value)
-          .and_return(new_normalized_value)
-      end
+      result
 
-      it 'stores the normalized value' do
-        result
-        expect(subject.value).to eq new_normalized_value
-      end
-    end
-
-    context 'when the attribute is read only' do
-      let(:attribute_read_only) { true }
-      let(:error_class)         { described_class::ReadOnlyError }
-
-      it 'raises an error' do
-        expect { result }.to raise_error error_class do |error|
-          expect(error.name).to eq attribute_name
-        end
-      end
-    end
-
-    context 'when the attribute is immutable' do
-      let(:attribute_immutable) { true }
-      let(:error_class)         { described_class::ImmutableValueError }
-
-      it 'raises an error' do
-        expect { result }.to raise_error error_class do |error|
-          expect(error.name).to eq attribute_name
-        end
-      end
+      expect(subject.value).to eq normalized_value
     end
   end
 end

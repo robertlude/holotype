@@ -10,14 +10,27 @@ Gem::Specification.new do |gem_specification|
     homepage:              'https://www.github.com/robertlude/holotype',
     license:               'MIT',
     name:                  'holotype',
-    required_ruby_version: '~> 2.0',
-    summary:               'DSL for quick model definitions',
+    required_ruby_version: '~> 2.1',
+    summary:               'Simple models',
     version:               Holotype::VERSION,
   ]
 
   filename_base = 'lib/holotype'
 
   file_list = %w[
+    attribute
+    attribute/definition
+    attribute/definition/default_conflict_error
+    attribute/definition/no_collection_class_error
+    attribute/definition/no_value_class_error
+    attribute/immutable_value_error
+    attribute/read_only_error
+    attributes_already_defined_error
+    collection_normalizer
+    inheritance_disallowed_error
+    missing_required_attributes_error
+    value_normalizer
+    version
   ]
 
   dependencies = Hash[

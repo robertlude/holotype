@@ -22,8 +22,39 @@ describe Holotype::ValueNormalizer do
 
     let(:result) { subject.normalize value }
 
-    it 'returns the given value' do
-      expect(result).to eq value
+    context 'when the definition has a value class' do
+      let(:definition_value_class) { double }
+
+      context 'when the value is `nil`' do
+        let(:value) { nil }
+
+        it 'returns `nil`' do
+          expect(result).to be nil
+        end
+      end
+
+      context 'when the value is not `nil`' do
+        junklet :value
+
+        let(:value_class_instance) { double }
+
+        before do
+          expect(definition_value_class)
+            .to receive(:new)
+            .with(value)
+            .and_return(value_class_instance)
+        end
+
+        it 'creates an instance of that value class with the value' do
+          expect(result).to be value_class_instance
+        end
+      end
+    end
+
+    context 'when the definition does not have a value class' do
+      it 'returns the value' do
+        expect(result).to eq value
+      end
     end
 
     context 'when the definition specifies immutability' do
@@ -34,34 +65,11 @@ describe Holotype::ValueNormalizer do
       end
     end
 
-    context 'when the definition specifies a value class' do
-      let(:definition_value_class) { fake_value_class }
-      let(:fake_value_class)       { double }
-      let(:fake_value_instance)    { double }
+    context 'when the definition does not specify immutability' do
+      let(:definition_immutable) { false }
 
-      before do
-        expect(fake_value_class)
-          .to receive(:new)
-          .with(value)
-          .and_return(fake_value_instance)
-      end
-
-      it 'uses the value to create an instance of the value class' do
-        expect(result).to be fake_value_instance
-      end
-    end
-
-    context 'when the given value is `nil`' do
-      let(:value) { }
-
-      context 'when the definition disallows nil' do
-        it 'raises an error'
-      end
-
-      context 'when the definition allows nil' do
-        it 'returns nil' do
-          expect(result).to be nil
-        end
+      it 'does not freeze the value' do
+        expect(result).not_to be_frozen
       end
     end
   end

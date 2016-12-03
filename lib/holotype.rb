@@ -2,6 +2,8 @@
   memorandum
 ].each { |gem| require gem }
 
+Bundler.require :default
+
 %i[
   attribute
   attributes_already_defined_error
@@ -125,11 +127,10 @@ class Holotype
   private
 
   def __holotype_hashify value
-    # TODO test this
     if value.respond_to? :to_hash
       value.to_hash
     elsif value.kind_of? Enumerable
-      value.map { |value| __hashify value }
+      value.map { |value| __holotype_hashify value }
     else
       value
     end

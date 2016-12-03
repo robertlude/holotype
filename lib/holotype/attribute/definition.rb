@@ -11,14 +11,12 @@ class Holotype
     class Definition
       attr_reader :name
 
-      # TODO add attribute option disallow_nil
-
       def initialize name, **options, &default_block
-        @collection       = options.fetch :collection, false
-        @immutable        = options.fetch :immutable, false
-        @name             = name
-        @read_only        = options.fetch :read_only, false
-        @required         = options.fetch :required, false
+        @collection = options.fetch :collection, false
+        @immutable  = options.fetch :immutable, false
+        @name       = name
+        @read_only  = options.fetch :read_only, false
+        @required   = options.fetch :required, false
 
         if options.key? :collection_class
           @has_collection_class = true
@@ -82,8 +80,8 @@ class Holotype
       end
 
       def collection_class
-        raise NoCollectionClassError.new self unless has_collection_class?
-        @collection_class
+        return @collection_class if has_collection_class?
+        raise NoCollectionClassError.new self
       end
 
       def read_only?
@@ -97,34 +95,13 @@ class Holotype
       private
 
       def normalize_single value
-        ValueNormalizer.new(self).normalize value
+        ValueNormalizer
+          .new(self)
+          .normalize value
       end
 
       def normalize_collection values
-        if has_collection_class? && @collection_class.ancestors.include?(Hash)
-          normalize_hash_like_collection values
-        else
-          normalize_array_like_collection values
-        end
-      end
-
-      def normalize_array_like_collection values
-        normalized_values = (values || []) # TODO test this
-                              .map { |value| normalize_single value }
-
-        if has_collection_class?
-          @collection_class.new normalized_values
-        else
-          normalized_values
-        end
-      end
-
-      def normalize_hash_like_collection values
-        normalized_values = values.map do |key, value|
-                              [key, normalize_single(value)]
-                            end
-
-        @collection_class[normalized_values]
+        CollectionNormalizer.new(self).normalize values
       end
 
       def symbolize_keys hash

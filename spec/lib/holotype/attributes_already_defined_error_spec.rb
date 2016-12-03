@@ -3,11 +3,13 @@ describe Holotype::AttributesAlreadyDefinedError do
 
   subject { described_class.new }
 
-  # Tests
+  # Class Tests
 
   it 'is a StandardError' do
-    expect(subject).to be_kind_of StandardError
+    expect(described_class.ancestors).to include StandardError
   end
+
+  # Instance Tests
 
   describe '#message' do
     let(:result) { subject.message }

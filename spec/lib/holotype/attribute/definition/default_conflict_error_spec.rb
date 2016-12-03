@@ -3,7 +3,13 @@ describe Holotype::Attribute::Definition::DefaultConflictError do
 
   subject { described_class.new }
 
-  # Instance Method Tests
+  # Class Tests
+
+  it 'is a StandardError' do
+    expect(described_class.ancestors).to include StandardError
+  end
+
+  # Instance Tests
 
   describe '#message' do
     let(:result) { subject.message }
