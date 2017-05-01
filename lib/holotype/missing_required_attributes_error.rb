@@ -12,7 +12,7 @@ class Holotype
       "#{format_list required_attributes}"                                \
       "\n\n"                                                              \
       "Missing attributes:"                                               \
-      "#{format_list attributes}"
+      "#{format_list attributes}".freeze
     end
 
     private

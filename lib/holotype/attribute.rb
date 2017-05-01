@@ -1,5 +1,6 @@
 %w[
   definition
+  frozen_modification_error
   immutable_value_error
   read_only_error
 ].each { |file| require_relative "attribute/#{file}" }
@@ -25,8 +26,9 @@ class Holotype
     end
 
     def value= new_value
-      raise ImmutableValueError.new name if definition.immutable?
-      raise ReadOnlyError.new name if definition.read_only?
+      raise ImmutableValueError.new     name if definition.immutable?
+      raise FrozenModificationError.new name if owner.frozen?
+      raise ReadOnlyError.new           name if definition.read_only?
 
       set_value new_value
     end

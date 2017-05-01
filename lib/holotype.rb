@@ -2,8 +2,6 @@
   memorandum
 ].each { |gem| require gem }
 
-Bundler.require :default
-
 %i[
   attribute
   attributes_already_defined_error
@@ -122,6 +120,14 @@ class Holotype
 
   def with **attributes
     self.class.new to_hash.merge attributes
+  end
+
+  def inspect
+    data = to_hash
+             .map { |attribute, value| "#{attribute}: #{value.inspect}" }
+             .join(', ')
+
+    "#{self.class.name}(#{data})"
   end
 
   private

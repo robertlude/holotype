@@ -34,5 +34,9 @@ describe Holotype::Attribute::Definition::NoValueClassError do
       expect(result).to eq "No value class for attribute definition: " \
                            "#{attribute_definition.name}"
     end
+
+    it 'returns a frozen value' do
+      expect(result).to be_frozen
+    end
   end
 end

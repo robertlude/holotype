@@ -8,7 +8,7 @@ class Holotype
       end
 
       def message
-        "Attribute `#{name}` is read-only and may not be written to".freeze
+        "Cannot modify read-only attribute `#{name}`".freeze
       end
     end
   end

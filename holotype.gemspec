@@ -1,11 +1,11 @@
 require File.expand_path '../lib/holotype/version', __FILE__
 
-Gem::Specification.new do |gem_specification|
-  # Data
+Gem::Specification.new do |gemspec|
+  # Basic Attributes
 
-  basic_attributes = Hash[
+  Hash[
     author:                'Robert Lude',
-    date:                  '2016-08-06',
+    date:                  '2017-05-01',
     email:                 'rob@ertlu.de',
     homepage:              'https://www.github.com/robertlude/holotype',
     license:               'MIT',
@@ -13,11 +13,12 @@ Gem::Specification.new do |gem_specification|
     required_ruby_version: '~> 2.1',
     summary:               'Simple models',
     version:               Holotype::VERSION,
-  ]
+  ].each { |attribute, value| gemspec.public_send "#{attribute}=", value }
 
-  filename_base = 'lib/holotype'
+  # File List
+  # TODO double check this
 
-  file_list = %w[
+  %w[
     attribute
     attribute/definition
     attribute/definition/default_conflict_error
@@ -31,36 +32,26 @@ Gem::Specification.new do |gem_specification|
     missing_required_attributes_error
     value_normalizer
     version
-  ]
+  ] .map { |file| "/#{file}" }               # prepend each with '/'
+    .unshift('')                             # add a blank entry with no '/'
+    .map { |file| "lib/holotype#{file}.rb" } # concatenate the final name
 
-  dependencies = Hash[
+  # Dependencies
+
+  Hash[
     development: Hash[
-      byebug:             nil,
-      memorandum:         '~> 2.1.2',
+      byebug:             '-> 9.0',
       rspec:              '~> 3.0',
       :'rspec-junklet' => '~> 2.0',
     ],
     runtime: Hash[
+      memorandum: '~> 2.1.2',
     ],
-  ]
-
-  # Value Assignment
-
-  require_gems = -> (environment) do
-    dependencies[environment].each do |gem_name, version|
-      gem_specification.public_send "add_#{environment}_dependency",
-                                    gem_name,
-                                    version
+  ].each do |environment, dependencies|
+    dependencies.each do |gem_name, version|
+      gemspec.public_send "add_#{environment}_dependency",
+                          gem_name,
+                          version
     end
   end
-
-  basic_attributes.each { |key, value| gem_specification.send "#{key}=", value }
-
-  gem_specification.files = file_list
-                              .map { |file| "/#{file}" }
-                              .unshift('')
-                              .map { |file| "#{filename_base}#{file}.rb" }
-
-  require_gems[:runtime]
-  require_gems[:development]
 end

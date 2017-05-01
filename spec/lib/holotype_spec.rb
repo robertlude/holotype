@@ -60,6 +60,7 @@ describe Holotype do
   let(:given_attributes)      { junk_map_attributes 'given_value' }
   let(:make_immutable)        { false }
   let(:normalized_attributes) { junk_map_attributes 'normalized_value' }
+  let(:test_class_name)       { "TestClass_#{junk}" }
   let(:test_instance)         { test_class.new **instance_attributes }
 
   let :attribute_object_doubles do
@@ -89,19 +90,25 @@ describe Holotype do
   end
 
   let :test_class do
-    Class.new(described_class).tap do |klass|
-      klass.send :make_immutable if make_immutable
+    Class
+      .new(described_class)
+      .tap do |klass|
+        klass.send :make_immutable if make_immutable
 
-      klass.send :default_attribute_options, **default_attribute_options \
-        if defined? default_attribute_options
+        klass.send :default_attribute_options, **default_attribute_options \
+          if defined? default_attribute_options
 
-      ATTRIBUTE_IDS.each do |id|
-        klass.send :attribute,
-                   attribute_names[id],
-                   **attribute_options[id],
-                   &attribute_blocks[id]
+        ATTRIBUTE_IDS.each do |id|
+          klass.send :attribute,
+                     attribute_names[id],
+                     **attribute_options[id],
+                     &attribute_blocks[id]
+        end
+
+        allow(klass)
+          .to receive(:name)
+          .and_return(test_class_name)
       end
-    end
   end
 
   # Class Method Tests
@@ -226,6 +233,8 @@ describe Holotype do
       mock_attribute_objects
       test_class
     end
+
+    context 'when called twice'
   end
 
   # Instance Method Tests
@@ -372,6 +381,40 @@ describe Holotype do
 
     it 'returns an instance with specified attributes set and unspecified attributes inherited' do
       expect(result.to_hash).to eq instance_attributes.merge new_attributes
+    end
+  end
+
+  describe '#inspect' do
+    let(:result) { test_instance.inspect }
+
+    let :inner_data_string do
+      /^#{test_class.name}\((.*)\)$/
+        .match(result)
+        .[](1)
+    end
+
+    let :data do
+      Hash[
+        inner_data_string
+          .split(', ')
+          .map { |pair| pair.split ': ' }
+      ]
+    end
+
+    let :expected_data do
+      Hash[
+        instance_attributes.map do |key, value|
+          [
+            key.to_s,
+            value.inspect,
+          ]
+        end
+      ]
+    end
+
+    it 'returns a string containing the class name and each attribute/value ' \
+       'pair' do
+      expect(data).to match expected_data
     end
   end
 end

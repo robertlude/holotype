@@ -81,5 +81,9 @@ describe Holotype::MissingRequiredAttributesError do
     it 'returns a descriptive error message' do
       expect(result).to eq expected_error_message
     end
+
+    it 'returns a frozen value' do
+      expect(result).to be_frozen
+    end
   end
 end

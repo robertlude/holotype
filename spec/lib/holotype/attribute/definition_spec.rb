@@ -55,8 +55,28 @@ describe Holotype::Attribute::Definition do
     context 'given option `required`' do
       let(:option_required) { true }
 
-      it 'stores the value' do
-        expect(subject.required?).to be option_required
+      context 'when given no default' do
+        it 'stores the value' do
+          expect(subject.required?).to be option_required
+        end
+      end
+
+      context 'when also given option `default`' do
+        junklet :option_default
+
+        it 'raises an error' do
+          expect { subject }
+            .to raise_error described_class::RequiredConflictError
+        end
+      end
+
+      context 'when also given a default block' do
+        let(:default_block) { -> { } }
+
+        it 'raises an error' do
+          expect { subject }
+            .to raise_error described_class::RequiredConflictError
+        end
       end
     end
 
@@ -140,7 +160,16 @@ describe Holotype::Attribute::Definition do
       end
     end
 
-    context 'when the attribute was not created with option `collection: true`' do
+    context 'when the attribute was create with option `collection_class`' do
+      let(:option_collection_class) { Array }
+
+      it 'returns `true`' do
+        expect(result).to be true
+      end
+    end
+
+    context 'when the attribute was not created with option `collection: ' \
+            'true` or `collection_class`' do
       it 'returns `false`' do
         expect(result).to be false
       end
@@ -158,7 +187,8 @@ describe Holotype::Attribute::Definition do
       end
     end
 
-    context 'when the attribute was not created with option `immutable: true`' do
+    context 'when the attribute was not created with option `immutable: ' \
+            'true`' do
       it 'returns `false`' do
         expect(result).to be false
       end
@@ -176,7 +206,8 @@ describe Holotype::Attribute::Definition do
       end
     end
 
-    context 'when the attribute was not created with option `read_only: true`' do
+    context 'when the attribute was not created with option `read_only: ' \
+            'true`' do
       it 'returns `false`' do
         expect(result).to be false
       end
@@ -186,17 +217,42 @@ describe Holotype::Attribute::Definition do
   describe '#has_collection_class?' do
     let(:result) { subject.has_collection_class? }
 
-    context 'when the attribute was created with option `collection_class`' do
-      let(:option_collection_class) { junk }
+    context 'when the instance was created with option `collection: true`' do
+      let(:option_collection) { true }
 
-      it 'returns `true`' do
-        expect(result).to be true
+      context 'when the instance was created with option `collection_class: ' \
+              '<something>`' do
+        let(:option_collection_class) { junk }
+
+        it 'returns `true`' do
+          expect(result).to be true
+        end
+      end
+
+      context 'when the instance was not created with option ' \
+              '`collection_class: <something>`' do
+        it 'returns `true`' do
+          expect(result).to be true
+        end
       end
     end
 
-    context 'when the attribute was not created with option `collection_class`' do
-      it 'returns `false`' do
-        expect(result).to be false
+    context 'when the instance was not created with option `collection: ' \
+            'true`' do
+      context 'when the attribute was created with option `collection_class: ' \
+              '<something>`' do
+        let(:option_collection_class) { junk }
+
+        it 'returns `true`' do
+          expect(result).to be true
+        end
+      end
+
+      context 'when the attribute was not created with option ' \
+              '`collection_class: <something>`' do
+        it 'returns `false`' do
+          expect(result).to be false
+        end
       end
     end
   end
@@ -204,19 +260,44 @@ describe Holotype::Attribute::Definition do
   describe '#collection_class' do
     let(:result) { subject.collection_class }
 
-    context 'when the instance was created with option `collection_class`' do
-      junklet(:option_collection_class) { double }
+    context 'when the instance was created with option `collection: true`' do
+      junklet(:option_collection) { true }
 
-      it 'returns the given `collection_class`' do
-        expect(result).to be option_collection_class
+      context 'when the instance was created with option `collection_class: ' \
+              '<something>`' do
+        let(:option_collection_class) { double }
+
+        it 'returns the given `collection_class`' do
+          expect(result).to be option_collection_class
+        end
+      end
+
+      context 'when the instance was not created with option ' \
+              '`collection_class: <something>`' do
+        it 'returns `Array`' do
+          expect(result).to be Array
+        end
       end
     end
 
-    context 'when the instance was not created with option `collection_class`' do
-      it 'raises an appropriate error' do
-        expect { result }.to raise_error do |error|
-          expect(error).to be_a described_class::NoCollectionClassError
-          expect(error.definition).to be subject
+    context 'when the instance was not created with option `collection: ' \
+            'true`' do
+      context 'when the instance was created with option `collection_class: ' \
+              '<something>`' do
+        let(:option_collection_class) { double }
+
+        it 'returns the given collection class`' do
+          expect(result).to be option_collection_class
+        end
+      end
+
+      context 'when the instance was not created with option ' \
+              '`collection_class: <something>`' do
+        it 'raises an appropriate error' do
+          expect { result }.to raise_error do |error|
+            expect(error).to be_a described_class::NoCollectionClassError
+            expect(error.definition).to be subject
+          end
         end
       end
     end

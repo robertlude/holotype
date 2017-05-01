@@ -2,6 +2,7 @@
   default_conflict_error
   no_collection_class_error
   no_value_class_error
+  required_conflict_error
 ].each { |file| require_relative "definition/#{file}" }
 
 require_relative 'definition/default_conflict_error.rb'
@@ -19,10 +20,16 @@ class Holotype
         @required   = options.fetch :required, false
 
         if options.key? :collection_class
+          @collection           = true
           @has_collection_class = true
           @collection_class     = options[:collection_class]
         else
-          @has_collection_class = false
+          if collection?
+            @has_collection_class = true
+            @collection_class     = Array
+          else
+            @has_collection_class = false
+          end
         end
 
         if options.key? :value_class
@@ -33,10 +40,14 @@ class Holotype
         end
 
         if default_block
-          raise DefaultConflictError.new if options.key? :default
+          raise DefaultConflictError.new  if options.key? :default
+          raise RequiredConflictError.new if @required
+
           @default      = default_block
           @default_type = :dynamic
         elsif options.key? :default
+          raise RequiredConflictError.new if @required
+
           @default      = options[:default]
           @default_type = :constant
         end
