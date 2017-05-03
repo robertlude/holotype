@@ -40,7 +40,7 @@ Gem::Specification.new do |gemspec|
 
   Hash[
     development: Hash[
-      byebug:             '-> 9.0',
+      byebug:             '~> 9.0',
       rspec:              '~> 3.0',
       :'rspec-junklet' => '~> 2.0',
     ],
