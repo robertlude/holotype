@@ -16,7 +16,6 @@ Gem::Specification.new do |gemspec|
   ].each { |attribute, value| gemspec.public_send "#{attribute}=", value }
 
   # File List
-  # TODO double check this
 
   %w[
     attribute
@@ -24,10 +23,14 @@ Gem::Specification.new do |gemspec|
     attribute/definition/default_conflict_error
     attribute/definition/no_collection_class_error
     attribute/definition/no_value_class_error
+    attribute/definition/required_conflict_error
+    attribute/frozen_modification_error
     attribute/immutable_value_error
     attribute/read_only_error
     attributes_already_defined_error
     collection_normalizer
+    collection_normalizer/expected_array_like_collection_error
+    collection_normalizer/expected_hash_like_collection_error
     inheritance_disallowed_error
     missing_required_attributes_error
     value_normalizer
@@ -35,6 +38,7 @@ Gem::Specification.new do |gemspec|
   ] .map { |file| "/#{file}" }               # prepend each with '/'
     .unshift('')                             # add a blank entry with no '/'
     .map { |file| "lib/holotype#{file}.rb" } # concatenate the final name
+    .tap { |files| gemspec.files = files }   # set the file list
 
   # Dependencies
 
