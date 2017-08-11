@@ -49,7 +49,7 @@ Gem::Specification.new do |gemspec|
       :'rspec-junklet' => '~> 2.0',
     ],
     runtime: Hash[
-      memorandum: '~> 2.1.2',
+      memorandum: '~> 2.1',
     ],
   ].each do |environment, dependencies|
     dependencies.each do |gem_name, version|
