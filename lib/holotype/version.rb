@@ -1,3 +1,3 @@
 class Holotype
-  VERSION = '0.15.1'.freeze
+  VERSION = '0.15.0'.freeze
 end
