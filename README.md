@@ -1,5 +1,7 @@
 # Holotype
 
+[![Build Status](https://travis-ci.org/robertlude/holotype.svg?branch=master)](https://travis-ci.org/robertlude/holotype)
+
 > hol·o·type
 >
 > noun (*BOTANY* *ZOOLOGY*)
