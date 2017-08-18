@@ -91,7 +91,8 @@ describe Holotype do
 
   let :test_class do
     Class
-      .new(described_class)
+      .new
+      .extend(described_class)
       .tap do |klass|
         klass.send :make_immutable if make_immutable
 
@@ -328,7 +329,7 @@ describe Holotype do
     end
 
     let :test_value_class do
-      Class.new(described_class).tap do |klass|
+      Class.new.extend(described_class).tap do |klass|
         klass.send :attribute, test_value_class_attribute_name
       end
     end
