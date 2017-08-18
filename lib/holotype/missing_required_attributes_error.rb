@@ -1,4 +1,4 @@
-class Holotype
+module Holotype
   class MissingRequiredAttributesError < StandardError
     attr_reader :attributes, :original_class
 

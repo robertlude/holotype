@@ -1,4 +1,4 @@
-class Holotype
+module Holotype
   class AttributesAlreadyDefinedError < StandardError
     def message; MESSAGE; end
 

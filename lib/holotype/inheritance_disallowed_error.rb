@@ -1,4 +1,4 @@
-class Holotype
+module Holotype
   class InheritanceDisallowedError < StandardError
     def message; MESSAGE; end
 

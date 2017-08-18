@@ -1,4 +1,4 @@
-class Holotype
+module Holotype
   class Attribute
     class FrozenModificationError < StandardError
       attr_reader :attribute_name

@@ -5,7 +5,7 @@
   read_only_error
 ].each { |file| require_relative "attribute/#{file}" }
 
-class Holotype
+module Holotype
   class Attribute
     attr_reader :definition, :owner
 

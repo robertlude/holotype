@@ -7,7 +7,7 @@
 
 require_relative 'definition/default_conflict_error.rb'
 
-class Holotype
+module Holotype
   class Attribute
     class Definition
       attr_reader :name
