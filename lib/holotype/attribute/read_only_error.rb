@@ -1,4 +1,4 @@
-class Holotype
+module Holotype
   class Attribute
     class ReadOnlyError < StandardError
       attr_reader :name

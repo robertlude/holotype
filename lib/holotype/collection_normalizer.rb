@@ -3,7 +3,7 @@
   expected_hash_like_collection_error
 ].each { |file| require_relative "collection_normalizer/#{file}" }
 
-class Holotype
+module Holotype
   class CollectionNormalizer
     extend Memorandum
 

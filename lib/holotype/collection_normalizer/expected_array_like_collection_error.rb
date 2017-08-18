@@ -1,4 +1,4 @@
-class Holotype
+module Holotype
   class CollectionNormalizer
     class ExpectedArrayLikeCollectionError < StandardError
       attr_reader :attribute

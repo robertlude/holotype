@@ -1,4 +1,4 @@
-class Holotype
+module Holotype
   class ValueNormalizer
     attr_reader :definition
 

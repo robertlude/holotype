@@ -26,10 +26,12 @@ If you encounter anything unrelated to the above, please file an issue.
 
 ## Usage
 
-Inherit from `Holotype` to create a model.
+Extend `Holotype` to create a model.
 
 ```ruby
-class Example < Holotype
+class Example
+  extend Holotype
+
   attribute :my_first_attribute
 end
 
@@ -51,7 +53,6 @@ My first attribute's value: some value
 | `collection_class` | Specifies the class to use for the collection                            | `Array`  | [Examples](#collections)          |
 | `collection`       | Specifies whether or not the attribute is a collection                   | `false`  | [Examples](#collections)          |
 | `default`          | Specifies a static value to use as a default for the value               | **none** | [Examples](#defaults)             |
-| `immutable`        | Specifies whether or not the attribute is immutable                      | `false`  | Undocument this?                  |
 | `read_only`        | Specifies whether or not the attribute is read only                      | `false`  | [Examples](#read-only-attributes) |
 | `required`         | Specifies whether or not the attribute is required during initialization | `false`  | [Examples](#required)             |
 | `value_class`      | Specifies the class to use for the value                                 | **none** | [Examples](#value_class)          |
@@ -64,7 +65,9 @@ handled. Note that providing a `collection_class` automatically sets
 `collection: true`.
 
 ```ruby
-class CollectionExample < Holotype
+class CollectionExample
+  extend Holotype
+
   attribute :an_array_collection,
             collection: true
 
@@ -137,7 +140,9 @@ Providing either type of default and a `required` option also result in an
 error.
 
 ```ruby
-class DefaultExample < Holotype
+class DefaultExample
+  extend Holotype
+
   attribute :static_default,
             default: 1234
 
@@ -162,7 +167,9 @@ example.dynamic_default = 2468
 Use option `read_only: true` to prevent changing the value of an attribute.
 
 ```ruby
-class ReadOnlyExample < Holotype
+class ReadOnlyExample
+  extend Holotype
+
   attribute :read_only_attribute,
             read_only: true
 end
@@ -179,11 +186,15 @@ end
 #### Immutable Objects
 
 ```ruby
-class ImmutableExampleChild < Holotype
+class ImmutableExampleChild
+  extend Holotype
+
   attribute :some_attribute
 end
 
-class ImmutableExample < Holotype
+class ImmutableExample
+  extend Holotype
+
   make_immutable
 
   attribute :basic_attribute
