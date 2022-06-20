@@ -61,7 +61,7 @@ describe Holotype do
   let(:make_immutable)        { false }
   let(:normalized_attributes) { junk_map_attributes 'normalized_value' }
   let(:test_class_name)       { "TestClass_#{junk}" }
-  let(:test_instance)         { test_class.new **instance_attributes }
+  let(:test_instance)         { test_class.new instance_attributes }
 
   let :attribute_object_doubles do
     map_attributes do |id|
@@ -355,13 +355,13 @@ describe Holotype do
     end
 
     it 'returns a hash acceptable for creating an equal instance' do
-      expect(test_class.new result).to eq test_instance
+      expect(test_class.new(**result)).to eq test_instance
     end
   end
 
   describe '#with' do
     let(:missing_attribute) { ATTRIBUTE_IDS.sample }
-    let(:result)            { test_instance.with new_attributes }
+    let(:result)            { test_instance.with **new_attributes }
 
     let :new_values do
       junk_map_attributes('new_value').delete_if do |attribute_id|
