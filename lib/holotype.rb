@@ -89,7 +89,7 @@ module Holotype
   module InstanceMethods
     attr_reader :attributes
 
-    def initialize **attributes
+    def initialize(attributes)
       __holotype_check_for_missing_required attributes
       __holotype_store attributes
     end
@@ -120,7 +120,7 @@ module Holotype
     end
 
     def with **attributes
-      self.class.new to_hash.merge attributes
+      self.class.new(**to_hash.merge(**attributes))
     end
 
     def inspect

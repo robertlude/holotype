@@ -10,7 +10,7 @@ Gem::Specification.new do |gemspec|
     homepage:              'https://www.github.com/robertlude/holotype',
     license:               'MIT',
     name:                  'holotype',
-    required_ruby_version: '~> 2.1',
+    required_ruby_version: '>= 2.7.0',
     summary:               'Simple models',
     version:               Holotype::VERSION,
   ].each { |attribute, value| gemspec.public_send "#{attribute}=", value }
@@ -44,7 +44,8 @@ Gem::Specification.new do |gemspec|
 
   Hash[
     development: Hash[
-      byebug:             '~> 9.0',
+      byebug:             '~> 11.0',
+      :'pry-byebug'    => '~> 3.9.0',
       rspec:              '~> 3.0',
       :'rspec-junklet' => '~> 2.0',
     ],

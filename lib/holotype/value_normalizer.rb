@@ -8,14 +8,14 @@ module Holotype
 
     def normalize value
       result = if definition.has_value_class?
-                 if value.nil?
-                   nil
-                 else
-                   definition.value_class.new value
-                 end
-               else
-                 value
-               end
+        if value.nil?
+          nil
+        else
+          definition.value_class.new(**value)
+        end
+      else
+        value
+      end
 
       if definition.immutable?
         result.freeze
